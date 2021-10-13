@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <!-- 图标 -->
+        <link rel="shortcut icon" type="image/x-icon" href="style/image/reverse.jpg" />
+        <title>index</title>
+
+        <link type="text/css" rel="stylesheet" href="style/css/stylesheet.css" />
+        <style>
+            ol   { list-style-position: outside; }
+            ol a { text-decoration:none; }
+            form { padding-left:20px; padding-top:20px; }
+        </style>
+
+        <!-- jquery -->
+        <link rel="stylesheet" href="style/js/jquery-ui-1.11.4/jquery-ui.css">
+        <script src="js/jquery-2.2.4/jquery.js"></script>
+        <script src="js/jquery-ui-1.11.4/jquery-ui.js"></script>
+    </head>
+    
+    <body>
+        <form name="vpn" action="device" method="get">
+            ip : <input type="text" name="ip">
+            <input type="submit" value="连接">
+        </form>
+        ${device_list}
+
+        <script>
+            $(document).ready(function(){
+            })
+        </script>
+	</body>
+
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <!-- 图标 -->
+        <link rel="shortcut icon" type="image/x-icon" href="style/image/reverse.jpg" />
+        <title>device</title>
+
+        <link type="text/css" rel="stylesheet" href="style/css/stylesheet.css" />
+        <!-- leaflet -->
+        <link rel="stylesheet" href="js/leaflet/leaflet.css">
+        <link rel="stylesheet" href="js/leaflet/MarkerCluster.css">
+        <link rel="stylesheet" href="js/leaflet/MarkerCluster.Default.css">
+        <script src="js/leaflet/leaflet.js"></script>
+        <script src="js/leaflet/leaflet.markercluster-src.js"></script>
+        <script src="js/leaflet/leaflet.rotatedMarker.js"></script>
+
+        <!-- socketio -->
+        <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script> -->
+        <script src="js/socket-io-4.0.1/socket.io.js"></script>
+
+        <!-- jquery -->
+        <link rel="stylesheet" href="style/js/jquery-ui-1.11.4/jquery-ui.css">
+        <script src="js/jquery-2.2.4/jquery.js"></script>
+        <script src="js/jquery-ui-1.11.4/jquery-ui.js"></script>
+    
+        <!-- 自己的js -->
+        <script src="js/my/common_map.js"></script>
+        <script src="js/my/device.js"></script>
+    </head>
+    
+    <body>
+	   	<div id="googleMap"></div>
+        <script>
+        $(document).ready(function(){
+            deviceInitAll();
+        })
+        </script>
+
+
+	</body>
+
+</html>
