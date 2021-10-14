@@ -1,4 +1,11 @@
-
+'''
+    原来的Google地图地址，被禁了，貌似
+        卫星图:http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}
+        普通图:http://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}
+    后来的Google地图地址:
+        卫星图:https://khms1.google.com/kh/v=908?x={x}&y={y}&z={z}
+        普通图:
+'''
 
 import os , math , time , threading , _thread , requests
 from urllib     import request , parse
@@ -7,7 +14,7 @@ from ping3      import ping
 
 
 _kMaxZoom           = 22
-_kMaxCountImg       = 1000
+_kMaxCount          = 100
 
 _kType              = 'type'
 _kAddr              = 'addr'
@@ -32,8 +39,8 @@ class MapDownloader(object):
     init_lock       = threading.Lock()
     lock            = threading.Lock()
 
-    map_cfg.append( {_kType: [0, 10], _kUrl: 'http://mt1.google.com/vt/lyrs=s', _kDir: _cur_dir + '/map/google_satellite', _kAddr: ''} )
-    map_cfg.append( {_kType: [1, 11], _kUrl: 'http://mt1.google.com/vt/lyrs=m', _kDir: _cur_dir + '/map/google_map', _kAddr: ''} )
+    map_cfg.append( {_kType: [0, 100], _kUrl: 'https://khms1.google.com/kh/v=908?x={x}&y={y}&z={z}', _kDir: _cur_dir + '/map/google_satellite', _kAddr: ''} )
+    map_cfg.append( {_kType: [1, 101], _kUrl: 'http://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',   _kDir: _cur_dir + '/map/google_map',       _kAddr: ''} )
     for cfg in map_cfg:
         addr                = parse.urlparse(cfg[_kUrl]).netloc
         cfg[_kAddr]         = addr
@@ -87,7 +94,7 @@ class MapDownloader(object):
                 else:
                     cls.ping_status[addr]   = False
                     print('ping %s fail'  %addr)
-            time.sleep(5)
+            time.sleep(10)
 
 
     @classmethod
@@ -161,6 +168,8 @@ class MapDownloader(object):
                 break
         if not exist:
             cls.list.insert(0, img)
+        if len(cls.list) > _kMaxCount:
+            cls.list.pop()
         cls.lock.release()
 
 
@@ -170,6 +179,7 @@ class MapDownloader(object):
         for value in cls.list[::-1]:
             if value.url == img.url:
                 cls.list.remove(value)
+        print('list len = ', len(cls.list))
         cls.lock.release()
 
 
@@ -189,7 +199,7 @@ class MapDownloader(object):
         z               = str(z)
         cfg             = self.getMapCfg(map_type)
         img.addr        = cfg[_kAddr]
-        img.url         = cfg[_kUrl] + '&x=' + x + '&y=' + y + '&z=' + z
+        img.url         = cfg[_kUrl].replace('{x}',x).replace('{y}',y).replace('{z}',z)
         img.addr        = cfg[_kAddr]
         img.dir         = cfg[_kDir] + '/'+z + '/' + x
         img.fname       = cfg[_kDir] + '/'+z + '/' + x + '/' + y + '.jpg'

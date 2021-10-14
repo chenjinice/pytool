@@ -19,7 +19,7 @@ var Sdev ={
 
 // 初始化函数
 function deviceInitAll(){
-    mapInit(10);
+    mapInit(100);
 
     var ip      = getUrlParam('ip');
     if (ip == false) { return; }

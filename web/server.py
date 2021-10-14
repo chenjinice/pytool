@@ -2,28 +2,33 @@ import logging , os , time , _thread , threading
 
 from flask              import Flask,request,render_template
 from flask_socketio     import SocketIO,emit,join_room,leave_room
+from engineio.payload   import Payload
 
 from obu.obu_abstract   import getTimeStr,checkIp
 from web.map_downloader import MapDownloader
 
 
-_kPort          = 80
-_kObuType       = 'obusy'
-_kAsnType       = 'asn2020'
-
-_cur_dir        = os.path.dirname(__file__)
-_vpn_cfg        = os.path.join(_cur_dir, 'vpn.cfg')
-_index_html     = os.path.join(_cur_dir, 'index.html')
-_html_dir       = os.path.join(_cur_dir, '')
-_app            = Flask('chen_server', static_url_path='', static_folder=_html_dir, template_folder=_html_dir)
-_socketio       = SocketIO(_app, ping_interval=10,ping_timeout=60*60*24)
-_room           = {}
-_lock           = threading.Lock()
-_obus           = {}
-_asns           = {}
-
 '''去掉恶心的log'''
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
+'''默认16,导致engineio老是打印说太少'''
+Payload.max_decode_packets  = 50
+
+
+_kPort                      = 80
+_kObuType                   = 'obusy'
+_kAsnType                   = 'asn2020'
+
+_cur_dir                    = os.path.dirname(__file__)
+_vpn_cfg                    = os.path.join(_cur_dir, 'vpn.cfg')
+_index_html                 = os.path.join(_cur_dir, 'index.html')
+_html_dir                   = os.path.join(_cur_dir, '')
+_app                        = Flask('chen_server', static_url_path='', static_folder=_html_dir, template_folder=_html_dir)
+_socketio                   = SocketIO(_app, ping_interval=10,ping_timeout=60*60*24)
+_room                       = {}
+_lock                       = threading.Lock()
+_obus                       = {}
+_asns                       = {}
+
 
 
 '''-----------api------------'''

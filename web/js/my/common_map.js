@@ -10,8 +10,8 @@ var MapType = {
     RemoteGoogleSatellite : 0,
     RemoteGoogleMap       : 1,
 
-    LocalGoogleSatellite  : 10,
-    LocalGoogleMap        : 11,
+    LocalGoogleSatellite  : 100,
+    LocalGoogleMap        : 101,
 }
 
 // 全局变量
@@ -27,9 +27,9 @@ var GKD = {
     sockio              : null,
     map                 : null,
     type                : 0,
-    center              : [0,0],
+    center              : [41.9016655,123.5177551],
     // center           : [28.1128547,112.8668242],
-    zoom                : 3,
+    zoom                : 17,
     min_zoom            : 3,
     max_zoom            : 22,
     layers              : [],
@@ -53,7 +53,8 @@ function getMapUrl(type){
     var url;
     switch(type){
         case MapType.RemoteGoogleSatellite:
-            url = "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}";
+            url = "https://khms1.google.com/kh/v=908?x={x}&y={y}&z={z}"
+            // url = "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}";
             break;
         case MapType.RemoteGoogleMap:
             url = "http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}";
@@ -61,7 +62,7 @@ function getMapUrl(type){
         case MapType.LocalGoogleSatellite:
             url = "map/google_satellite/{z}/{x}/{y}.jpg";
             break;
-        case mapType.localGoogleMap:
+        case MapType.localGoogleMap:
             url = "map/google_map/{z}/{x}/{y}.jpg";
             break;
         default:
