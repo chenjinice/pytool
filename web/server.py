@@ -88,13 +88,8 @@ def device():
 def sioSendObuData(ip='',data={}):
     _socketio.emit('sio_msg',data,to=ip)
 
-_s_update_time = time.time()
 def sioSendMapUpdateSiginal():
-    global _s_update_time
-    now = time.time()
-    if now - _s_update_time > 3:
-        _s_update_time  =   now
-        _socketio.emit('sio_map_init')
+    _socketio.emit('sio_map_init')
 
 @_socketio.on('connect')
 def connect():

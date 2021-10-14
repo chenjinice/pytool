@@ -51,6 +51,7 @@ class MapDownloader(object):
     ping_thread             = None
     instance                = None
     signal_sender           = None
+    update_time             = time.time()
 
 
     def __new__(cls, *args, **kwargs):
@@ -80,6 +81,8 @@ class MapDownloader(object):
             cls.lock.release()
             if img:
                 cls.downloadImage(img)
+                list_len = cls.liseDelete(img)
+                cls.sendUpdateSignal(list_len)
             else:
                 time.sleep(1)
 
@@ -179,8 +182,9 @@ class MapDownloader(object):
         for value in cls.list[::-1]:
             if value.url == img.url:
                 cls.list.remove(value)
-        print('list len = ', len(cls.list))
+        ret = len(cls.list)
         cls.lock.release()
+        return ret
 
 
     def getMapCfg(self,map_type):
@@ -209,22 +213,27 @@ class MapDownloader(object):
 
     @classmethod
     def downloadImage(cls,img):
-        if not cls.ping_status[img.addr]:
-            return
         try:
-            r = requests.get(img.url,timeout=3)
+            r   = requests.get(img.url,timeout=3)
             if r.status_code == 200:
                 if not os.path.exists(img.dir):
                     os.makedirs(img.dir)
                 with open(img.fname,'wb') as f:
                     f.write(r.content)
-                if cls.signal_sender:
-                    cls.signal_sender()
-                print(img.url, 'download ok')
+                    print(img.url, 'download ok')
             else:
-                print(img.url, 'download failed ,',r.status_code)
+                print(img.url,'download failed ,',r.status_code)
         except Exception as e:
             print(img.url,'download error')
-        cls.liseDelete(img)
 
+
+    @classmethod
+    def sendUpdateSignal(cls,list_len):
+        if not cls.signal_sender:
+            return
+        now     = time.time()
+        t       = now -cls.update_time
+        if (t > 3) or (list_len == 0):
+            cls.update_time = now
+            cls.signal_sender()
 
