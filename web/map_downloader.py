@@ -13,23 +13,25 @@ from ping3      import ping
 
 
 
-_kMaxZoom           = 22
-_kMaxCount          = 100
+_kMaxZoom                   = 22
+_kMaxImageCount             = 100
+_kMaxThreadCount            = 30
 
-_kType              = 'type'
-_kAddr              = 'addr'
-_kUrl               = 'url'
-_kDir               = 'dir'
+_kType                      = 'type'
+_kAddr                      = 'addr'
+_kUrl                       = 'url'
+_kDir                       = 'dir'
 
 _cur_dir            = os.path.dirname(__file__)
 
 
 class ImgInfo():
     def __init__(self):
-        self.addr       = ''
-        self.url        = ''
-        self.dir        = ''
-        self.fname      = ''
+        self.addr           = ''
+        self.url            = ''
+        self.dir            = ''
+        self.fname          = ''
+        self.loading        = False
 
 
 class MapDownloader(object):
@@ -52,6 +54,7 @@ class MapDownloader(object):
     instance                = None
     signal_sender           = None
     update_time             = time.time()
+    thread_count            = 0
 
 
     def __new__(cls, *args, **kwargs):
@@ -74,17 +77,21 @@ class MapDownloader(object):
     @classmethod
     def __downThread(cls):
         while cls.ready:
-            img             = None
+            flag        = False
             cls.lock.acquire()
-            if len(cls.list) > 0:
-                img         = cls.list[0]
+            for img in cls.list:
+                if  img.loading :
+                    continue
+                if cls.thread_count > _kMaxThreadCount:
+                    break
+                flag        = True
+                img.loading = True
+                cls.thread_count += 1
+                _thread.start_new_thread(cls.downloadImage,(img,))
             cls.lock.release()
-            if img:
-                cls.downloadImage(img)
-                list_len = cls.liseDelete(img)
-                cls.sendUpdateSignal(list_len)
-            else:
-                time.sleep(1)
+            if not flag:
+                time.sleep(2)
+
 
     @classmethod
     def __pingThread(cls):
@@ -171,7 +178,7 @@ class MapDownloader(object):
                 break
         if not exist:
             cls.list.insert(0, img)
-        if len(cls.list) > _kMaxCount:
+        if len(cls.list) > _kMaxImageCount:
             cls.list.pop()
         cls.lock.release()
 
@@ -183,6 +190,7 @@ class MapDownloader(object):
             if value.url == img.url:
                 cls.list.remove(value)
         ret = len(cls.list)
+        cls.thread_count -= 1
         cls.lock.release()
         return ret
 
@@ -213,6 +221,7 @@ class MapDownloader(object):
 
     @classmethod
     def downloadImage(cls,img):
+        str = time.strftime("[%Y-%m-%d %H:%M:%S]", time.localtime())
         try:
             r   = requests.get(img.url,timeout=3)
             if r.status_code == 200:
@@ -220,11 +229,13 @@ class MapDownloader(object):
                     os.makedirs(img.dir)
                 with open(img.fname,'wb') as f:
                     f.write(r.content)
-                    print(img.url, 'download ok')
+                    print(str,img.url, 'download ok')
             else:
                 print(img.url,'download failed ,',r.status_code)
         except Exception as e:
             print(img.url,'download error')
+        list_len = cls.liseDelete(img)
+        cls.sendUpdateSignal(list_len)
 
 
     @classmethod
