@@ -40,6 +40,7 @@ class MapDownloader(object):
     list            = []
     init_lock       = threading.Lock()
     lock            = threading.Lock()
+    dir_lock        = threading.Lock()
 
     map_cfg.append( {_kType: [0, 100], _kUrl: 'https://khms1.google.com/kh/v=908?x={x}&y={y}&z={z}', _kDir: _cur_dir + '/map/google_satellite', _kAddr: ''} )
     map_cfg.append( {_kType: [1, 101], _kUrl: 'http://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',   _kDir: _cur_dir + '/map/google_map',       _kAddr: ''} )
@@ -77,20 +78,22 @@ class MapDownloader(object):
     @classmethod
     def __downThread(cls):
         while cls.ready:
-            flag        = False
+            tmp_list    = []
             cls.lock.acquire()
             for img in cls.list:
                 if  img.loading :
                     continue
                 if cls.thread_count > _kMaxThreadCount:
                     break
-                flag        = True
                 img.loading = True
                 cls.thread_count += 1
-                _thread.start_new_thread(cls.downloadImage,(img,))
+                tmp_list.append(img)
             cls.lock.release()
-            if not flag:
+            if len(tmp_list) == 0:
                 time.sleep(2)
+            else:
+                for img in tmp_list:
+                    _thread.start_new_thread(cls.downloadImage, (img,))
 
 
     @classmethod
@@ -223,17 +226,19 @@ class MapDownloader(object):
     def downloadImage(cls,img):
         str = time.strftime("[%Y-%m-%d %H:%M:%S]", time.localtime())
         try:
-            r   = requests.get(img.url,timeout=3)
+            r   = requests.get(img.url,timeout=5)
             if r.status_code == 200:
+                cls.dir_lock.acquire()
                 if not os.path.exists(img.dir):
                     os.makedirs(img.dir)
+                cls.dir_lock.release()
                 with open(img.fname,'wb') as f:
                     f.write(r.content)
                     print(str,img.url, 'download ok')
             else:
                 print(img.url,'download failed ,',r.status_code)
         except Exception as e:
-            print(img.url,'download error')
+            print(img.url,'download error',e)
         list_len = cls.liseDelete(img)
         cls.sendUpdateSignal(list_len)
 
