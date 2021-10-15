@@ -55,8 +55,12 @@ function deviceInitAll(){
 function updateHostCar(data){
     var lat     = data.lat.toFixed(7);
     var lng     = data.lng.toFixed(7);
+    var elev    = data.elev.toFixed(2);
     var speed   = data.speed.toFixed(2);
     var heading = data.heading.toFixed(2);
+    var num_st  = data.num_st;
+    var hdop    = data.hdop.toFixed(1);
+    var model   = data.model;
     var pt      = [lat,lng];
     var str     = "lng : "+lng+"</br>lat : "+lat+"</br>heading : "+heading + "</br>speed : " + speed + " km/h";
 
@@ -71,6 +75,14 @@ function updateHostCar(data){
     if(Sdev.pan){
         GKD.map.panTo(pt,{"animate":true,"duration":0.5});
     }
+    space  = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+    uistr  = "经纬度 : "+lng+","+lat+","+elev + space;
+    uistr += "航向角 : "+heading + space;
+    uistr += "速度   : "+speed + space;
+    uistr += "卫星数 : "+num_st + space;
+    uistr += "hdop  : "+hdop + space;
+    uistr += "模式  : " + model;
+    $("#car").html(uistr);
 }
 
 // 定时跑的函数
@@ -213,6 +225,10 @@ function checkRsiExist(rsi_type,alert_type,lng,lat){
         tmp.lng         = lng;
         tmp.lat         = lat;
         Sdev.rsi.push(tmp);
+        if(Sdev.rsi.length > 50){
+            var tmp = Sdev.rsi.pop();
+            GKD.map.removeLayer(tmp);
+        }
     }
     return flag;
 }
