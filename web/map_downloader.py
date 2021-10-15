@@ -12,10 +12,11 @@ from urllib     import request , parse
 from ping3      import ping
 
 
-
 _kMaxZoom                   = 22
 _kMaxImageCount             = 100
-_kMaxThreadCount            = 30
+_kMaxThreadCount            = 50
+_kUpdateTime                = 2
+
 
 _kType                      = 'type'
 _kAddr                      = 'addr'
@@ -42,8 +43,8 @@ class MapDownloader(object):
     lock            = threading.Lock()
     dir_lock        = threading.Lock()
 
-    map_cfg.append( {_kType: [0, 100], _kUrl: 'https://khms1.google.com/kh/v=908?x={x}&y={y}&z={z}', _kDir: _cur_dir + '/map/google_satellite', _kAddr: ''} )
-    map_cfg.append( {_kType: [1, 101], _kUrl: 'http://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',   _kDir: _cur_dir + '/map/google_map',       _kAddr: ''} )
+    map_cfg.append( {_kType: [0, 100], _kUrl: 'http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', _kDir: _cur_dir + '/map/google_satellite', _kAddr: ''} )
+    map_cfg.append( {_kType: [1, 101], _kUrl: 'http://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', _kDir: _cur_dir + '/map/google_map',       _kAddr: ''} )
     for cfg in map_cfg:
         addr                = parse.urlparse(cfg[_kUrl]).netloc
         cfg[_kAddr]         = addr
@@ -249,7 +250,7 @@ class MapDownloader(object):
             return
         now     = time.time()
         t       = now -cls.update_time
-        if (t > 3) or (list_len == 0):
+        if (t > _kUpdateTime) or (list_len == 0):
             cls.update_time = now
             cls.signal_sender()
 

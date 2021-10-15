@@ -53,8 +53,7 @@ function getMapUrl(type){
     var url;
     switch(type){
         case MapType.RemoteGoogleSatellite:
-            url = "https://khms1.google.com/kh/v=908?x={x}&y={y}&z={z}"
-            // url = "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}";
+            url = "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}";
             break;
         case MapType.RemoteGoogleMap:
             url = "http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}";
@@ -62,7 +61,7 @@ function getMapUrl(type){
         case MapType.LocalGoogleSatellite:
             url = "map/google_satellite/{z}/{x}/{y}.jpg";
             break;
-        case MapType.localGoogleMap:
+        case MapType.LocalGoogleMap:
             url = "map/google_map/{z}/{x}/{y}.jpg";
             break;
         default:
