@@ -5,13 +5,20 @@
 
 // 本文件变量
 var Sdev ={
-    host_car    : null,
-    timer       : null,
-    pan         : true,
-    map         : [],
-    rsi         : [],
-    rsm         : [],
-    bsm         : []
+    host_car    : 	null,
+    timer       : 	null,
+    pan         : 	true,
+    map         : 	[],
+    rsi         : 	[],
+    rsm         : 	[],
+    bsm         : 	[],
+	cfg			: 	{
+						bsm			: true,
+						map 		: true,
+						rsi 		: true,
+						rsm 		: true,
+						spat 		: true,
+					}
 }
 
 
@@ -20,10 +27,10 @@ var Sdev ={
 // 初始化函数
 function deviceInitAll(){
     mapInit(100);
-
     var ip      = getUrlParam('ip');
+	var name 	= decodeURI(getUrlParam('n'));
     if (ip == false) { return; }
-    
+	$("title").html(ip+" "+name);
     GKD.sockio.on('connect', function(){
         GKD.sockio.emit('hello',ip);
     });
@@ -34,15 +41,15 @@ function deviceInitAll(){
         if(data.type == "host_pt"){
             updateHostCar(data);
         }else if(data.type == "bsmFrame"){
-            parseAsnBsm(data);
+			if(Sdev.cfg.bsm)parseAsnBsm(data);
         }else if(data.type == "rsmFrame"){
-            parseAsnRsm(data);
+            if(Sdev.cfg.rsm)parseAsnRsm(data);
         }else if(data.type == "rsiFrame"){
-            parseAsnRsi(data);
+            if(Sdev.cfg.rsi)parseAsnRsi(data);
         }else if(data.type == "mapFrame"){
-            parseAsnMap(data);
+            if(Sdev.cfg.map)parseAsnMap(data);
         }else if(data.type == "spatFrame"){
-            parseAsnSpat(data);
+            if(Sdev.cfg.spat)parseAsnSpat(data);
         }
     });
     // timer
@@ -63,7 +70,6 @@ function updateHostCar(data){
     var model   = data.model;
     var pt      = [lat,lng];
     var str     = "lng : "+lng+"</br>lat : "+lat+"</br>heading : "+heading + "</br>speed : " + speed + " km/h";
-
     if(Sdev.host_car == null){
         Sdev.host_car = L.marker(pt,{icon:GKD.car_icon,rotationAngle:data.heading}).addTo(GKD.map);
         Sdev.host_car.bindPopup(str);
@@ -75,20 +81,26 @@ function updateHostCar(data){
     if(Sdev.pan){
         GKD.map.panTo(pt,{"animate":true,"duration":0.5});
     }
-    space  = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-    uistr  = "经纬度 : "+lng+","+lat+","+elev + space;
-    uistr += "航向角 : "+heading + space;
-    uistr += "速度   : "+speed + space;
-    uistr += "卫星数 : "+num_st + space;
-    uistr += "hdop  : "+hdop + space;
-    uistr += "模式  : " + model;
-    $("#car").html(uistr);
+    $("#ui_pos").html(lng+","+lat+","+elev);
+	$("#ui_heading").html(heading);
+	$("#ui_speed").html(speed);
+	$("#ui_num_st").html(num_st);
+	$("#ui_hdop").html(hdop);
+	$("#ui_model").html(model);
 }
 
 // 定时跑的函数
 function intervalFun(){
     clearOldPtc(1000);
     clearOldBsm(1500);
+}
+
+function setDevCfg(key,value){
+	Sdev.cfg[key] = value;
+}
+
+function getDevCfg(){
+	return Sdev.cfg;
 }
 
 

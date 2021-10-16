@@ -57,13 +57,15 @@ def index():
         for line in f.readlines():
             arr=line.strip().replace(' ','').split(',')
             str=""
-            ip = arr[0]
+            ip      = arr[0]
+            name    = ''
             if len(ip) > 0 :
                 str+=ip
             if len(arr) > 1  and  len(arr[1]) > 0:
+                name    = arr[1]
                 str+='--'+arr[1]
             if len(str) > 0:
-                dev_list+='<li><a target="_blank" href="device?ip='+ip+'">'+str+'</a></li>'
+                dev_list+='<li><a target="_blank" href="device?ip='+ip+'&n='+name+'">'+str+'</a></li>'
     if len(dev_list) > 0:
         dev_list ='<ol>' + dev_list +'</ol>'
     with open(_index_html, 'r', encoding='utf-8') as f:

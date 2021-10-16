@@ -11,3 +11,32 @@ html,body{
     height: 100%;
 }
 
+#top {
+	position: fixed;
+	top: 0px;z-index: 999;
+	width: 100%;
+	text-align:center;
+	color: black;
+	background-color: white;
+	padding : 4px;
+}
+
+.checkbox {
+	width : 20px;
+	height: 20px;
+}
+
+#bottom {
+	position: fixed;
+	bottom: 0px;z-index: 999;
+	width: 100%;
+	text-align:center;
+	color: black;
+	background-color: white;
+	font: 20px bold;
+}
+
+#bottom span {
+	padding-right:20px;
+}
+

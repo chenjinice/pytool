@@ -30,13 +30,45 @@
     </head>
     
     <body>
-	   	<div id ="googleMap"></div>
-        <div id ="car" style="position: fixed;bottom: 10px;z-index: 999;width: 100%;text-align:center;color: #fff;font: 20px bold;"></div>
-
+	   	<div id = "googleMap"></div>
+		<div id = "top">
+			<div>
+				经度:<input type="text" name="firstname">
+				纬度:<input type="text" name="lastname">
+				<button type="button">加点</button>
+				<button type="button">中心加点</button>
+				<button type="button">清除</button>&nbsp;&nbsp;
+			</div>
+		</div>
+        <div id = "bottom" >
+			经纬度 : <span id="ui_pos">		</span>
+			航向角 : <span id="ui_heading"> </span>
+			速度 :   <span id="ui_speed"> 	</span>
+			卫星数 : <span id="ui_num_st"> 	</span>
+			hdop :   <span id="ui_hdop"> 	</span>
+			模式 : 	 <span id="ui_model"> 	</span>| 
+			bsm:<input type="checkbox" name="bsm" id="bsm" class="checkbox" />
+			map:<input type="checkbox" name="map" id="map" class="checkbox" />
+			rsi:<input type="checkbox" name="rsi" id="rsi" class="checkbox" />
+			rsm:<input type="checkbox" name="rsm" id="rsm" class="checkbox" />
+			spat:<input type="checkbox" name="spat" id="spat" class="checkbox" />
+		</div>
 
         <script>
         $(document).ready(function(){
             deviceInitAll();
+			
+			var cfg = getDevCfg();
+			$("#bsm").attr("checked",cfg.bsm);
+			$("#map").attr("checked",cfg.map);
+			$("#rsi").attr("checked",cfg.rsi);
+			$("#rsm").attr("checked",cfg.rsm);
+			$("#spat").attr("checked",cfg.spat);
+			$("#bsm").change(function() 	{	setDevCfg("bsm",$(this).prop('checked'));	});
+			$("#map").change(function() 	{	setDevCfg("map",$(this).prop('checked'));	});
+			$("#rsi").change(function() 	{	setDevCfg("rsi",$(this).prop('checked'));	});
+			$("#rsm").change(function() 	{	setDevCfg("rsm",$(this).prop('checked'));	});
+			$("#spat").change(function()	{	setDevCfg("spat",$(this).prop('checked'));	});
         })
         </script>
 
