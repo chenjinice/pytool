@@ -43,8 +43,8 @@ class MapDownloader(object):
     lock            = threading.Lock()
     dir_lock        = threading.Lock()
 
-    map_cfg.append( {_kType: [0, 100], _kUrl: 'http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', _kDir: _cur_dir + '/map/google_satellite', _kAddr: ''} )
-    map_cfg.append( {_kType: [1, 101], _kUrl: 'http://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', _kDir: _cur_dir + '/map/google_map',       _kAddr: ''} )
+    map_cfg.append( {_kType: [1, 101], _kUrl: 'http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', _kDir: _cur_dir + '/map/google_satellite', _kAddr: ''} )
+    map_cfg.append( {_kType: [2, 102], _kUrl: 'http://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', _kDir: _cur_dir + '/map/google_map',       _kAddr: ''} )
     for cfg in map_cfg:
         addr                = parse.urlparse(cfg[_kUrl]).netloc
         cfg[_kAddr]         = addr

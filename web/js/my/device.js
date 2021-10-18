@@ -5,32 +5,37 @@
 
 // 本文件变量
 var Sdev ={
+    ip          :   "",
     host_car    : 	null,
     timer       : 	null,
-    pan         : 	true,
     map         : 	[],
     rsi         : 	[],
     rsm         : 	[],
     bsm         : 	[],
+    spat        :   [],
+    online      :   ifOnLine(),
 	cfg			: 	{
-						bsm			: true,
-						map 		: true,
-						rsi 		: true,
-						rsm 		: true,
-						spat 		: true,
+                        control_tools   : true,
+                        follow          : true,
+						bsm			    : true,
+						map 		    : true,
+						rsi 		    : true,
+						rsm 		    : true,
+						spat 		   : true,
 					}
 }
 
 
 
-
 // 初始化函数
 function deviceInitAll(){
-    mapInit(100);
-    var ip      = getUrlParam('ip');
-	var name 	= decodeURI(getUrlParam('n'));
+    mapInit();
+    var ip               = getUrlParam('ip');
+	var name 	         = decodeURI(getUrlParam('n'));
     if (ip == false) { return; }
 	$("title").html(ip+" "+name);
+    Sdev.ip              = ip;
+
     GKD.sockio.on('connect', function(){
         GKD.sockio.emit('hello',ip);
     });
@@ -78,7 +83,7 @@ function updateHostCar(data){
         Sdev.host_car.setRotationAngle(heading);
         Sdev.host_car.setPopupContent(str);
     }
-    if(Sdev.pan){
+    if(Sdev.cfg.follow){
         GKD.map.panTo(pt,{"animate":true,"duration":0.5});
     }
     $("#ui_pos").html(lng+","+lat+","+elev);
@@ -89,17 +94,47 @@ function updateHostCar(data){
 	$("#ui_model").html(model);
 }
 
+function devClearAll() {
+    Sdev.bsm.length     = 0;
+    Sdev.map.length     = 0;
+    Sdev.rsi.length     = 0;
+    Sdev.rsm.length     = 0;
+    Sdev.spat.length    = 0;
+    clearAll();  
+}
+
 // 定时跑的函数
 function intervalFun(){
     clearOldPtc(1000);
     clearOldBsm(1500);
 }
 
+function ifOnLine() {
+    var str = window.location + "";
+    if( str.indexOf("http") == 0 ){
+        return true;
+    }else{
+        return false;
+    }
+}
+
 function setDevCfg(key,value){
 	Sdev.cfg[key] = value;
+    console.log(value.toString());
+    if(Sdev.online){
+        $.cookie(Sdev.ip + "-" + key,value.toString(),{expires:365});
+    }
 }
 
 function getDevCfg(){
+    if(Sdev.online){
+        for(var key in Sdev.cfg){
+            var value = $.cookie(Sdev.ip + "-" + key);
+            if (typeof(value) != "undefined"){
+                Sdev.cfg[key]   = JSON.parse(value);
+            }
+        }
+    }
 	return Sdev.cfg;
 }
 

@@ -7,11 +7,11 @@
 
 // 地图类型
 var MapType = {
-    RemoteGoogleSatellite : 0,
-    RemoteGoogleMap       : 1,
+    RemoteGoogleSatellite : 1,
+    RemoteGoogleMap       : 2,
 
-    LocalGoogleSatellite  : 100,
-    LocalGoogleMap        : 101,
+    LocalGoogleSatellite  : 101,
+    LocalGoogleMap        : 102,
 }
 
 // 全局变量
@@ -26,7 +26,7 @@ var GKD = {
 
     sockio              : null,
     map                 : null,
-    type                : 0,
+    type                : MapType.LocalGoogleSatellite,
     center              : [41.9016655,123.5177551],
     // center           : [28.1128547,112.8668242],
     zoom                : 17,
@@ -50,8 +50,16 @@ function getUrlParam(key){
 
 // 获取地图网址
 function getMapUrl(type){
-    var url;
     switch(type){
+        case MapType.RemoteGoogleSatellite:
+        case MapType.RemoteGoogleMap:
+        case MapType.LocalGoogleSatellite:
+        case MapType.LocalGoogleMap:
+            GKD.type = type;
+            break;
+    }
+    var url;
+    switch(GKD.type){
         case MapType.RemoteGoogleSatellite:
             url = "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}";
             break;
@@ -65,16 +73,16 @@ function getMapUrl(type){
             url = "map/google_map/{z}/{x}/{y}.jpg";
             break;
         default:
-            url = "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}";
+            GKD.type = RemoteGoogleSatellite;
+            url      = "http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}";
     }
     return url;
 }
 
 // 初始化地图
-function mapInit( type = -1 ){
-    if (type != -1)         GKD.type = type;
+function mapInit( type = 0 ){
+    var url = getMapUrl(type);
     if (GKD.sockio == null) GKD.sockio = io();
-    var url = getMapUrl(GKD.type);
     if(GKD.map == null){
         GKD.map = L.map('googleMap',{zoomAnimation:true});
         GKD.map.setView(GKD.center,GKD.zoom);
@@ -111,8 +119,6 @@ function clearAll(){
 
 // 添加可移动的marker
 function addMarker(lng,lat,pan=false){
-    lat = lat.toFixed(7);
-    lng = lng.toFixed(7);
     var marker = L.marker([lat,lng]).addTo(GKD.map);
     cacheLayer(marker);
     marker.dragging.enable();
@@ -143,6 +149,15 @@ function addFixedMarker(lng,lat,str="",pan=false) {
     }
     return marker;
 }
+
+
+// 在地图中心添加marker
+function addMarkerAtCenter(){
+    var center = GKD.map.getCenter();
+    addMarker(center.lng.toFixed(7),center.lat.toFixed(7));
+    cacheLayer(marker);
+}
+
 
 // 添加线段末端的箭头
 function addLineArrow(latlng,angle,arrow=GKD.arrow1_icon)
