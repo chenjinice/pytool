@@ -12,65 +12,91 @@ html,body{
 }
 
 
-#bottom {
+/*------------------------------*/
+#div_control{
 	position: fixed;
-	bottom: 0px;z-index: 999;
-	padding: 0;
-	width: 100%;
+	top: 20px;
+	right: 120px;
+	z-index: 999;
+	opacity: 0.5;
 	background-color: white;
-	line-height: 30px;
+	border: 20px solid black;
 }
 
-/*------------------------------------*/
-#car_info{
-	padding-left: 10px;
-	line-height: 30px;
-	/*font-size: 16px;*/
-	font-weight: bold;
+#div_control_content{
+	position: fixed;
+	top: 20px;
+	right: 120px;
+	z-index: 999;
+	display: none;
+	background-color: white;
+	text-align: center;
+	line-height: 25px;
+	width: 130px;
+	padding: 2px;
 }
 
-#car_info span {
-	padding-right:20px;
-}
-
-#car_info #ui_tools_control {
-	/*margin-left: 20px;*/
-	width: 50px;
-}
-
-/*---------------------------------*/
-#car_cfg {
-	padding-left: 10px;
-	/*display: none;*/
-}
-
-#car_cfg input {
+#div_control_content input{
 	width : 20px;
 	height: 20px;
 }
 
-#car_cfg span{
-	padding-right: 15px;
+#div_control_content select{
+	width: 120px;
+	height: 25px;
+}
+
+
+/*------------------------------*/
+
+#bottom{
+	position: fixed;
+	bottom: 0px;
+	z-index: 999;
+	width: 100%;
+	background-color: white;
+	line-height: 30px;
+	padding-left: 10px;
+}
+
+/*------------------------------------*/
+#div_status{
+	font-weight: bold;
+}
+
+#div_status span{
+	padding-right:10px;
 }
 
 
 /*-----------------------------*/
-#ui_tools{
-	/*display: none;*/
-	line-height: 35px;
-	padding-left: 10px;
-	border-bottom: 2px solid #ccc;
+#div_tools{
+
 }
 
-#ui_tools input{
+#div_tools input{
 	width: 130px;
 }
 
-#ui_tools span{
+#div_tools span{
 	padding-right: 10px;
 }
 
-#ui_tools select{
-	width: 120px;
-	height: 25px;
+
+
+/*---------------------------------*/
+#div_config {
+
 }
+
+#div_config input {
+	width : 20px;
+	height: 20px;
+}
+
+#div_config span{
+	padding-right: 10px;
+}
+
+
+

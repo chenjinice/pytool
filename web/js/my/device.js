@@ -15,13 +15,14 @@ var Sdev ={
     spat        :   [],
     online      :   ifOnLine(),
 	cfg			: 	{
-                        control_tools   : true,
+                        div_tools       : true,
+                        div_config      : true,
                         follow          : true,
 						bsm			    : true,
 						map 		    : true,
 						rsi 		    : true,
 						rsm 		    : true,
-						spat 		   : true,
+						spat 		    : true,
 					}
 }
 
@@ -86,15 +87,15 @@ function updateHostCar(data){
     if(Sdev.cfg.follow){
         GKD.map.panTo(pt,{"animate":true,"duration":0.5});
     }
-    $("#ui_pos").html(lng+","+lat+","+elev);
-	$("#ui_heading").html(heading);
-	$("#ui_speed").html(speed);
-	$("#ui_num_st").html(num_st);
-	$("#ui_hdop").html(hdop);
-	$("#ui_model").html(model);
+    $("#car_pos").html(lng+","+lat+","+elev);
+	$("#car_heading").html(heading);
+	$("#car_speed").html(speed);
+	$("#car_num_st").html(num_st);
+	$("#car_hdop").html(hdop);
+	$("#car_model").html(model);
 }
 
-function devClearAll() {
+function clearCache() {
     Sdev.bsm.length     = 0;
     Sdev.map.length     = 0;
     Sdev.rsi.length     = 0;

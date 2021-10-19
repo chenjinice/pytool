@@ -32,21 +32,12 @@
     
     <body>
 	   	<div id = "googleMap"></div>
-        <div id = "bottom">
-            <div id = "car_cfg">
-                <input type="checkbox" id="follow" /><span>跟随</span>
-                <input type="checkbox" id="bsm" /><span>bsm</span>
-                <input type="checkbox" id="map" /><span>map</span>
-                <input type="checkbox" id="rsi" /><span>rsi</span>
-                <input type="checkbox" id="rsm" /><span>rsm</span>
-                <input type="checkbox" id="spat" /><span>spat</span>
-            </div>
-            <div id = "ui_tools">
-                经度 <input type="number" id="input_lng" value="" min="-180.0" max="180.0" oninput="if(value < -180)value=-180;if (value > 180) value=180" />
-                纬度 <input type="number" id="input_lat" value="" min="-90.0" max="90.0" oninput="if(value < -90)value=-90;if (value > 90) value=90" />
-                <button id = "addPoint">加点</button><span></span>
-                <button id = "addCenterPoint">中心加点</button><span></span>
-                <button id = "clear">清除</button>
+
+        <div id="div_control"></div>
+        <div id="div_control_content">
+            <div><input type="checkbox" id="switch_config"  />配置</div>
+            <div><input type="checkbox" id="switch_tools" />按钮</div>
+            <div>
                 <select id = "map_type">
                   <option value="1">在线谷歌卫星</option>
                   <option value="2">在线谷歌普通</option>
@@ -54,17 +45,34 @@
                   <option value="102">本地谷歌普通</option>
                 </select>
             </div>
-            <div id = "car_info">
-    			经纬度 : <span id="ui_pos">		</span>
-    			航向角 : <span id="ui_heading">  </span>
-    			速度 :   <span id="ui_speed"> 	</span>
-    			卫星数 : <span id="ui_num_st"> 	</span>
-    			hdop :   <span id="ui_hdop"> 	</span>
-    			模式 : 	 <span id="ui_model"> 	</span>
-                <input type="checkbox" name="spat" id="spat" /><span>spat</span>
-                <button id = "ui_tools_control">^</button>
+        </div>
+
+        <div id = "bottom">
+            <div id = "div_config">
+                <input type="checkbox" id="follow" /><span>跟随</span>
+                <input type="checkbox" id="bsm" /><span>bsm</span>
+                <input type="checkbox" id="map" /><span>map</span>
+                <input type="checkbox" id="rsi" /><span>rsi</span>
+                <input type="checkbox" id="rsm" /><span>rsm</span>
+                <input type="checkbox" id="spat" /><span>spat</span>
+                <button id = "clear_cache">清除缓存</button>
             </div>
-		</div>
+            <div id = "div_tools">
+                经度 <input type="number" id="input_lng" value="" min="-180.0" max="180.0" oninput="if(value < -180)value=-180;if (value > 180) value=180" />
+                纬度 <input type="number" id="input_lat" value="" min="-90.0" max="90.0" oninput="if(value < -90)value=-90;if (value > 90) value=90" />
+                <button id = "addPoint">加点</button><span></span>
+                <button id = "addCenterPoint">中心加点</button><span></span>
+                <button id = "clear">清除</button>
+            </div>
+            <div id = "div_status">
+                经纬度 : <span id="car_pos">       </span>
+                航向角 : <span id="car_heading">  </span>
+                速度 :   <span id="car_speed">    </span>
+                卫星数 : <span id="car_num_st">    </span>
+                hdop :   <span id="car_hdop">   </span>
+                模式 :   <span id="car_model">  </span>
+            </div>
+        </div>
 
         <script>
         $(document).ready(function(){
@@ -77,29 +85,41 @@
 			$("#rsi").attr("checked",cfg.rsi);
 			$("#rsm").attr("checked",cfg.rsm);
 			$("#spat").attr("checked",cfg.spat);
-            $("#follow").change(function()  {   setDevCfg("follow",$(this).prop('checked'));   });
-			$("#bsm").change(function() 	{	setDevCfg("bsm",$(this).prop('checked'));	});
-			$("#map").change(function() 	{	setDevCfg("map",$(this).prop('checked'));	});
-			$("#rsi").change(function() 	{	setDevCfg("rsi",$(this).prop('checked'));	});
-			$("#rsm").change(function() 	{	setDevCfg("rsm",$(this).prop('checked'));	});
-			$("#spat").change(function()	{	setDevCfg("spat",$(this).prop('checked'));	});
+            $("#follow").change(function()      {   setDevCfg("follow",$(this).prop('checked'));   });
+			$("#bsm").change(function() 	    {	setDevCfg("bsm",$(this).prop('checked'));	});
+			$("#map").change(function() 	    {	setDevCfg("map",$(this).prop('checked'));	});
+			$("#rsi").change(function() 	    {	setDevCfg("rsi",$(this).prop('checked'));	});
+			$("#rsm").change(function() 	    {	setDevCfg("rsm",$(this).prop('checked'));	});
+			$("#spat").change(function()	    {	setDevCfg("spat",$(this).prop('checked'));	});
+            $("#clear_cache").click(function()  {   clearCache();  });
 
 
-            if(cfg.control_tools){
-                $("#ui_tools").show();
-                $("#car_cfg").show();
-            }else{
-                $("#ui_tools").hide();
-                $("#car_cfg").hide();;
-            }
-            $("#ui_tools_control").click(function(){   
-                $("#ui_tools").toggle();
-                $("#car_cfg").toggle();
+            $( "#div_control" ).draggable().click(function() {
+                $("#div_control_content").toggle().position({
+                    my: "left top",
+                    at: "left bottom",
+                    of: this
+                });
+            });
+            // $('body').click(function(){ alert(123); });
+            if(cfg.div_config){ $("#div_config").show(); }else{ $("#div_config").hide(); }
+            if(cfg.div_tools) { $("#div_tools").show();  }else{ $("#div_tools").hide(); }
+            $("#switch_config").attr("checked",cfg.div_config).change(function()  {
+                var obj  = $("#div_config");
+                var flag = $(this).prop('checked'); 
+                flag ? obj.show(200) : obj.hide(200);
+                setDevCfg("div_config",flag);   
+            });
+            $("#switch_tools").attr("checked",cfg.div_tools).change(function()  {
+                var obj  = $("#div_tools");
+                var flag = $(this).prop('checked'); 
+                flag ? obj.show(200) : obj.hide(200);
+                setDevCfg("div_tools",flag);   
             });
 
 
             $("#addCenterPoint").click(function() { addMarkerAtCenter();          });
-            $("#clear").click(function()          { devClearAll();                });
+            $("#clear").click(function()          { clearAll();                });
             $("#addPoint").click(function()       { 
                 var lng =  parseFloat($("#input_lng").val()).toFixed(7);
                 var lat =  parseFloat($("#input_lat").val()).toFixed(7);
