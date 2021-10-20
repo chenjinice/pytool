@@ -5,7 +5,9 @@
 
 // 本文件变量
 var Sdev ={
-    ip          :   "",
+    ip          :   "127.0.0.1",
+    name        :   "---",   
+    asn_type    :   "asn2020",
     host_car    : 	null,
     timer       : 	null,
     map         : 	[],
@@ -15,8 +17,8 @@ var Sdev ={
     spat        :   [],
     online      :   ifOnLine(),
 	cfg			: 	{
-                        div_tools       : true,
-                        div_config      : true,
+                        div_cfg         : true,
+                        div_tool        : true,
                         follow          : true,
 						bsm			    : true,
 						map 		    : true,
@@ -30,37 +32,45 @@ var Sdev ={
 
 // 初始化函数
 function deviceInitAll(){
-    mapInit();
-    var ip               = getUrlParam('ip');
-	var name 	         = decodeURI(getUrlParam('n'));
-    if (ip == false) { return; }
-	$("title").html(ip+" "+name);
-    Sdev.ip              = ip;
+    var ip          = getUrlParam('ip');
+    var name        = decodeURI(getUrlParam('n'));
+    var asn_type    = getUrlParam('asn');
+    ip          ?   Sdev.ip         = ip        :0;
+    name        ?   Sdev.name       = name      :0;
+    asn_type    ?   Sdev.asn_type   = asn_type  :0;
+    $("title").html(Sdev.ip+" "+Sdev.name);
 
+    mapInit();
+	
     GKD.sockio.on('connect', function(){
-        GKD.sockio.emit('hello',ip);
+        GKD.sockio.emit('hello',Sdev.ip);
     });
     GKD.sockio.on('sio_map_init',function(){
         mapInit();
     })
     GKD.sockio.on('sio_msg',function(data){
-        if(data.type == "host_pt"){
-            updateHostCar(data);
-        }else if(data.type == "bsmFrame"){
-			if(Sdev.cfg.bsm)parseAsnBsm(data);
-        }else if(data.type == "rsmFrame"){
-            if(Sdev.cfg.rsm)parseAsnRsm(data);
-        }else if(data.type == "rsiFrame"){
-            if(Sdev.cfg.rsi)parseAsnRsi(data);
-        }else if(data.type == "mapFrame"){
-            if(Sdev.cfg.map)parseAsnMap(data);
-        }else if(data.type == "spatFrame"){
-            if(Sdev.cfg.spat)parseAsnSpat(data);
-        }
+        parseObuData(data);
     });
     // timer
     if(Sdev.timer == null){
         Sdev.timer  = self.setInterval("intervalFun()",300);
+    }
+}
+
+// 解析数据
+function parseObuData(data){
+    if(data.type == "host_pt"){
+        updateHostCar(data);
+    }else if(data.type == "bsmFrame"){
+        if(Sdev.cfg.bsm)parseAsnBsm(data);
+    }else if(data.type == "rsmFrame"){
+        if(Sdev.cfg.rsm)parseAsnRsm(data);
+    }else if(data.type == "rsiFrame"){
+        if(Sdev.cfg.rsi)parseAsnRsi(data);
+    }else if(data.type == "mapFrame"){
+        if(Sdev.cfg.map)parseAsnMap(data);
+    }else if(data.type == "spatFrame"){
+        if(Sdev.cfg.spat)parseAsnSpat(data);
     }
 }
 
@@ -121,7 +131,6 @@ function ifOnLine() {
 
 function setDevCfg(key,value){
 	Sdev.cfg[key] = value;
-    console.log(value.toString());
     if(Sdev.online){
         $.cookie(Sdev.ip + "-" + key,value.toString(),{expires:365});
     }

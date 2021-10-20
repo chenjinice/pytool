@@ -65,7 +65,9 @@ def index():
                 name    = arr[1]
                 str+='--'+arr[1]
             if len(str) > 0:
-                dev_list+='<li><a target="_blank" href="device?ip='+ip+'&n='+name+'">'+str+'</a></li>'
+                dev_list += '<li><a target="_blank" href="device?'
+                dev_list += 'ip='+ip+'&n='+name+'&asn='+_kAsnType
+                dev_list += '">'+str+'</a></li>'
     if len(dev_list) > 0:
         dev_list ='<ol>' + dev_list +'</ol>'
     with open(_index_html, 'r', encoding='utf-8') as f:
@@ -73,21 +75,37 @@ def index():
     return html_text
 
 
-@_app.route('/device', methods=['POST', 'GET'])
+@_app.route('/device', methods=['GET'])
 def device():
-    ip = ''
-    if request.method == 'GET':
-        ip =  request.args.get('ip')
+    ip = request.args.get('ip')
     if checkIp(ip):
         return render_template('device.html')
     else:
         return 'wrong ip'
 
 
+@_app.route('/asn_upload', methods=['POST'])
+def asnUpload():
+    result  =   {}
+    i=0
+    for f in request.files.values():
+        arr         = f.name.split('#')
+        asn_type    = f.name.split('#')[0]
+        asn         = _asns.get(asn_type)
+        if not asn:
+            print('unsupport asn type -> '+asn_type)
+            continue
+        else:
+            data    = f.stream.read()
+            dict    = asn.parseAsn(data)
+            result[f.filename] = dict
+    return result
+
+
 
 
 '''---------------------flask_socketio-----------------'''
-def sioSendObuData(ip='',data={}):
+def sioSendObuData(data={},ip=''):
     _socketio.emit('sio_msg',data,to=ip)
 
 def sioSendMapUpdateSiginal():
@@ -140,3 +158,4 @@ def getBounds(lat1,lat2,lng1,lng2,zoom,map_type):
     # print(lat1,lat2,lng1,lng2,zoom,map_type)
     MapDownloader.signal_sender = sioSendMapUpdateSiginal
     MapDownloader.getBounds(lat1,lat2,lng1,lng2,zoom,map_type)
+

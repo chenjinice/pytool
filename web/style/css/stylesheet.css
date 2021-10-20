@@ -12,13 +12,16 @@ html,body{
 }
 
 
+
+
+
 /*------------------------------*/
 #div_control{
 	position: fixed;
 	top: 20px;
-	right: 120px;
+	right: 20px;
 	z-index: 999;
-	opacity: 0.5;
+	opacity: 0.7;
 	background-color: white;
 	border: 20px solid black;
 }
@@ -30,13 +33,13 @@ html,body{
 	z-index: 999;
 	display: none;
 	background-color: white;
-	text-align: center;
+	/*text-align: center;*/
 	line-height: 25px;
 	width: 130px;
 	padding: 2px;
 }
 
-#div_control_content input{
+#div_control_content input[type=checkbox]{
 	width : 20px;
 	height: 20px;
 }
@@ -48,7 +51,6 @@ html,body{
 
 
 /*------------------------------*/
-
 #bottom{
 	position: fixed;
 	bottom: 0px;
@@ -61,42 +63,45 @@ html,body{
 
 /*------------------------------------*/
 #div_status{
-	font-weight: bold;
+	/*font-weight: bold;*/
 }
 
 #div_status span{
+	font-weight: bold;
 	padding-right:10px;
 }
 
 
 /*-----------------------------*/
-#div_tools{
+#div_tool{
 
 }
 
-#div_tools input{
+#div_tool input[type=number]{
 	width: 130px;
 }
 
-#div_tools span{
+#div_tool span{
 	padding-right: 10px;
 }
 
 
 
 /*---------------------------------*/
-#div_config {
+#div_cfg {
 
 }
 
-#div_config input {
+#div_cfg input[type=checkbox] {
 	width : 20px;
 	height: 20px;
 }
 
-#div_config span{
+#div_cfg span {
 	padding-right: 10px;
 }
 
-
+#cfg_add_asn {
+	display: none;
+}
 

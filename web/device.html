@@ -35,10 +35,10 @@
 
         <div id="div_control"></div>
         <div id="div_control_content">
-            <div><input type="checkbox" id="switch_config"  />配置</div>
-            <div><input type="checkbox" id="switch_tools" />按钮</div>
+            <div><input type="checkbox" id="control_tool" />工具</div>
+            <div><input type="checkbox" id="control_cfg"  />配置</div>
             <div>
-                <select id = "map_type">
+                <select id = "control_map_type">
                   <option value="1">在线谷歌卫星</option>
                   <option value="2">在线谷歌普通</option>
                   <option value="101">本地谷歌卫星</option>
@@ -47,87 +47,123 @@
             </div>
         </div>
 
+
         <div id = "bottom">
-            <div id = "div_config">
-                <input type="checkbox" id="follow" /><span>跟随</span>
-                <input type="checkbox" id="bsm" /><span>bsm</span>
-                <input type="checkbox" id="map" /><span>map</span>
-                <input type="checkbox" id="rsi" /><span>rsi</span>
-                <input type="checkbox" id="rsm" /><span>rsm</span>
-                <input type="checkbox" id="spat" /><span>spat</span>
-                <button id = "clear_cache">清除缓存</button>
+            <div id = "div_cfg">
+                <input type="checkbox" id="cfg_follow" /><span>跟随</span>
+                <input type="checkbox" id="cfg_bsm" /><span>bsm</span>
+                <input type="checkbox" id="cfg_map" /><span>map</span>
+                <input type="checkbox" id="cfg_rsi" /><span>rsi</span>
+                <input type="checkbox" id="cfg_rsm" /><span>rsm</span>
+                <input type="checkbox" id="cfg_spat" /><span>spat</span>
+                <input type="file"     id="cfg_add_asn" multiple="multiple" value="asn文件" />
+                <input type="button"   id="cfg_asn_submit"  value="打开asn" />
+                <input type="button"   id="cfg_clear"       value="清空" />
             </div>
-            <div id = "div_tools">
+            <div id = "div_tool">
                 经度 <input type="number" id="input_lng" value="" min="-180.0" max="180.0" oninput="if(value < -180)value=-180;if (value > 180) value=180" />
                 纬度 <input type="number" id="input_lat" value="" min="-90.0" max="90.0" oninput="if(value < -90)value=-90;if (value > 90) value=90" />
-                <button id = "addPoint">加点</button><span></span>
-                <button id = "addCenterPoint">中心加点</button><span></span>
-                <button id = "clear">清除</button>
+                <input type="button" id="tool_add_point" value="加点" />
+                <input type="button" id="tool_add_center" value="中心加点" />
+                <input type="button" id="tool_clear"      value="清空" />
             </div>
             <div id = "div_status">
                 经纬度 : <span id="car_pos">       </span>
-                航向角 : <span id="car_heading">  </span>
-                速度 :   <span id="car_speed">    </span>
+                航向角 : <span id="car_heading">   </span>
+                速度 :   <span id="car_speed">     </span>
                 卫星数 : <span id="car_num_st">    </span>
-                hdop :   <span id="car_hdop">   </span>
-                模式 :   <span id="car_model">  </span>
+                hdop :   <span id="car_hdop">     </span>
+                模式 :   <span id="car_model">    </span>
             </div>
         </div>
+
+
 
         <script>
         $(document).ready(function(){
             deviceInitAll();
 			
 			var cfg = getDevCfg();
-            $("#follow").attr("checked",cfg.follow);
-			$("#bsm").attr("checked",cfg.bsm);
-			$("#map").attr("checked",cfg.map);
-			$("#rsi").attr("checked",cfg.rsi);
-			$("#rsm").attr("checked",cfg.rsm);
-			$("#spat").attr("checked",cfg.spat);
-            $("#follow").change(function()      {   setDevCfg("follow",$(this).prop('checked'));   });
-			$("#bsm").change(function() 	    {	setDevCfg("bsm",$(this).prop('checked'));	});
-			$("#map").change(function() 	    {	setDevCfg("map",$(this).prop('checked'));	});
-			$("#rsi").change(function() 	    {	setDevCfg("rsi",$(this).prop('checked'));	});
-			$("#rsm").change(function() 	    {	setDevCfg("rsm",$(this).prop('checked'));	});
-			$("#spat").change(function()	    {	setDevCfg("spat",$(this).prop('checked'));	});
-            $("#clear_cache").click(function()  {   clearCache();  });
+            $("#cfg_follow").attr("checked",cfg.follow);
+			$("#cfg_bsm").attr("checked",cfg.bsm);
+			$("#cfg_map").attr("checked",cfg.map);
+			$("#cfg_rsi").attr("checked",cfg.rsi);
+			$("#cfg_rsm").attr("checked",cfg.rsm);
+			$("#cfg_spat").attr("checked",cfg.spat);
+            $("#cfg_follow").change(function()      {   setDevCfg("follow",$(this).prop('checked'));   });
+			$("#cfg_bsm").change(function() 	    {	setDevCfg("bsm",$(this).prop('checked'));	});
+			$("#cfg_map").change(function() 	    {	setDevCfg("map",$(this).prop('checked'));	});
+			$("#cfg_rsi").change(function() 	    {	setDevCfg("rsi",$(this).prop('checked'));	});
+			$("#cfg_rsm").change(function() 	    {	setDevCfg("rsm",$(this).prop('checked'));	});
+			$("#cfg_spat").change(function()	    {	setDevCfg("spat",$(this).prop('checked'));	});
+            $("#cfg_clear").click(function()        {   clearCache();  });
+            $("#cfg_asn_submit").click(function()   {   
+                return $("#cfg_add_asn").click();  
+            });
+            $("#cfg_add_asn").change(function()     { 
+                var formData = new FormData();
+                var f_list = $(this)[0].files;
+                for(var i=0;i<f_list.length;i++){
+                    formData.append(Sdev.asn_type+"#"+i, $(this)[0].files[i]);
+                }
+                $.ajax({
+                    url: '/asn_upload',
+                    type: 'POST',
+                    cache: false,
+                    data: formData,
+                    processData: false,
+                    contentType: false
+                }).done(function(res) {
+                    console.log("done");
+                    for(var i in res){
+                        parseObuData(res[i]);
+                    }
+                }).fail(function(res) {
+                    console.log("fail");
+                    console.log(res);
+                });
+                console.log($(this)[0].files);
+            });
 
 
-            $( "#div_control" ).draggable().click(function() {
-                $("#div_control_content").toggle().position({
+
+            $("#div_control").draggable().click(function(e) {
+                var tmp_div = $("#div_control_content");
+                tmp_div.toggle().position({
                     my: "left top",
                     at: "left bottom",
                     of: this
                 });
+                tmp_div.click(function(e2)          {   e2.stopPropagation(); });
+                $(document).one("click", function() {   tmp_div.hide(); });
+                e.stopPropagation();
             });
-            // $('body').click(function(){ alert(123); });
-            if(cfg.div_config){ $("#div_config").show(); }else{ $("#div_config").hide(); }
-            if(cfg.div_tools) { $("#div_tools").show();  }else{ $("#div_tools").hide(); }
-            $("#switch_config").attr("checked",cfg.div_config).change(function()  {
-                var obj  = $("#div_config");
+            $("#control_map_type").val(GKD.type.toString());
+            $("#control_map_type").change(function()    { mapInit( parseInt($(this).val() ) );    });
+            if(cfg.div_cfg){ $("#div_cfg").show(); }else{ $("#div_cfg").hide(); }
+            if(cfg.div_tool) { $("#div_tool").show();  }else{ $("#div_tool").hide(); }
+            $("#control_cfg").attr("checked",cfg.div_cfg).change(function()  {
+                var obj  = $("#div_cfg");
                 var flag = $(this).prop('checked'); 
                 flag ? obj.show(200) : obj.hide(200);
-                setDevCfg("div_config",flag);   
+                setDevCfg("div_cfg",flag);   
             });
-            $("#switch_tools").attr("checked",cfg.div_tools).change(function()  {
-                var obj  = $("#div_tools");
+            $("#control_tool").attr("checked",cfg.div_tool).change(function()  {
+                var obj  = $("#div_tool");
                 var flag = $(this).prop('checked'); 
                 flag ? obj.show(200) : obj.hide(200);
-                setDevCfg("div_tools",flag);   
+                setDevCfg("div_tool",flag);   
             });
 
 
-            $("#addCenterPoint").click(function() { addMarkerAtCenter();          });
-            $("#clear").click(function()          { clearAll();                });
-            $("#addPoint").click(function()       { 
+
+            $("#tool_add_center").click(function()  { addMarkerAtCenter();          });
+            $("#tool_clear").click(function()       { clearCache();                 });
+            $("#tool_add_point").click(function()   { 
                 var lng =  parseFloat($("#input_lng").val()).toFixed(7);
                 var lat =  parseFloat($("#input_lat").val()).toFixed(7);
                 addMarker(lng,lat,true);
             });
-            $("#map_type").val(GKD.type.toString());
-            $("#map_type").change(function()      { mapInit( parseInt($(this).val() ) );    });
-
         })
         </script>
 

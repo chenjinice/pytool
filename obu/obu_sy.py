@@ -59,11 +59,11 @@ class ObuSy(ObuAbstract):
                         data) >= 36:
                     dict = self.__parseGps(data)
                     if self.html_sender:
-                        self.html_sender(self.ip, dict)
+                        self.html_sender(dict,self.ip)
                 else:
                     if self.asn_parser and self.html_sender:
                         dict = self.asn_parser(data,self.ip)
-                        self.html_sender(self.ip,dict)
+                        self.html_sender(dict,self.ip)
             except ConnectionResetError:
                 continue
             except OSError:
