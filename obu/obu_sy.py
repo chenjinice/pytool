@@ -8,10 +8,10 @@ from obu.obu_abstract import *
 
 
 '''--------------------沈阳OBU，asn为新四跨版本-----------------------------'''
-
 _kObySyPort         = 30000
 _kUdpBuffSize       = 4096
 _kHeartInterval     = 2
+
 
 
 class ObuSy(ObuAbstract):
@@ -50,6 +50,7 @@ class ObuSy(ObuAbstract):
             for obu in cls.s_cache.values():
                 obu.__sendHeart()
             cls.s_lock.release()
+            print(cls.__name__+':cache len=',len(cls.s_cache))
             time.sleep(_kHeartInterval)
 
 
@@ -63,11 +64,11 @@ class ObuSy(ObuAbstract):
                         data) >= 36:
                     dict = self.__parseGps(data)
                     if self.html_sender:
-                        self.html_sender(dict,self.ip)
+                        self.html_sender(dict,self.room_id)
                 else:
                     if self.asn_parser and self.html_sender:
                         dict = self.asn_parser(data,self.ip)
-                        self.html_sender(dict,self.ip)
+                        self.html_sender(dict,self.room_id)
             except ConnectionResetError:
                 continue
             except OSError:
@@ -95,15 +96,19 @@ class ObuSy(ObuAbstract):
         self.model      = model
 
         dict            = {}
-        dict[kType]     = kPositionType
-        dict[kIp]       = self.ip
-        dict[kLng]      = self.lng
-        dict[kLat]      = self.lat
-        dict[kElev]     = self.elev
-        dict[kSpeed]    = self.speed
-        dict[kHeading]  = self.heading
-        dict[kNumSt]    = self.num_st
-        dict[kHdop]     = self.hdop
-        dict[kModel]    = self.model
+        dict[oType]     = oPositionType
+        dict[oIp]       = self.ip
+        dict[oLng]      = self.lng
+        dict[oLat]      = self.lat
+        dict[oElev]     = self.elev
+        dict[oSpeed]    = self.speed
+        dict[oHeading]  = self.heading
+        dict[oNumSt]    = self.num_st
+        dict[oHdop]     = self.hdop
+        dict[oModel]    = self.model
         return dict
 
+
+
+'''------------添加到支持的obu-------------'''
+obuAll[ObuSy.__name__.lower()] = ObuSy

@@ -395,3 +395,6 @@ class Asn2020(AsnAbstract):
 
 
 
+
+'''------------添加到支持的asn-------------'''
+asnAll[Asn2020.__name__.lower()] = Asn2020

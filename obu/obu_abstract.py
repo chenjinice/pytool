@@ -7,23 +7,27 @@ import time
 import threading
 
 
+'''------支持的所有obu-------'''
+obuAll      = {}
+
+
 '''----'''
 _kDefaultPort           = 10000
 
 
 '''----------key----------'''
-kPositionType           = 'host_pt'
+oPositionType           = 'host_pt'
 
-kType                   = 'type'
-kIp                     = 'ip'
-kLng                    = 'lng'
-kLat                    = 'lat'
-kElev                   = 'elev'
-kSpeed                  = 'speed'
-kHeading                = 'heading'
-kNumSt                  = 'num_st'
-kHdop                   = 'hdop'
-kModel                  = 'model'
+oType                   = 'type'
+oIp                     = 'ip'
+oLng                    = 'lng'
+oLat                    = 'lat'
+oElev                   = 'elev'
+oSpeed                  = 'speed'
+oHeading                = 'heading'
+oNumSt                  = 'num_st'
+oHdop                   = 'hdop'
+oModel                  = 'model'
 
 
 

@@ -119,7 +119,7 @@ def roomAddClient(room_id,sid):
     # if room:
     #     for i in range(0, len(room)):
     #         if room[i][0] == sid:
-    #             index   = i
+    #             room[i][1] = time.time()
     #             break
     # else:
     #     room            = []
@@ -127,7 +127,7 @@ def roomAddClient(room_id,sid):
     #     index           = 0
     #
     # _room[ip].append(request.sid)
-    # join_room(ip)
+    join_room(room_id)
     # print(getTimeStr(), 'room[' + ip + '] : ' + sid + ' join , len =', len(_room[ip]))
     _lock.release()
 
