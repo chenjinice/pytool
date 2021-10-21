@@ -113,22 +113,23 @@ def sioSendErr(err='',sid=''):
     _socketio.emit('sio_err',err,to=sid)
 
 def roomAddClient(room_id,sid):
-    index   = -1
     _lock.acquire()
-    room = _room.get(room_id)
-    # if room:
-    #     for i in range(0, len(room)):
-    #         if room[i][0] == sid:
-    #             room[i][1] = time.time()
-    #             break
-    # else:
-    #     room            = []
-    #     _room[room_id]  = room
-    #     index           = 0
-    #
-    # _room[ip].append(request.sid)
+    t       = time.time()
+    room    = _room.get(room_id)
+    if not room:
+        _room[room_id]  = []
+        room            = _room[room_id]
+    exist = False
+    for i in range(0, len(room)):
+        if room[i][0] == sid:
+            exist       = True
+            room[i][1]  = t
+            break
+    if not exist:
+        room.append([sid,t])
+
     join_room(room_id)
-    # print(getTimeStr(), 'room[' + ip + '] : ' + sid + ' join , len =', len(_room[ip]))
+    print(getTimeStr(), 'room[' + room_id + '] new join,sid= ' + sid + ',room len =', len(_room[room_id]))
     _lock.release()
 
 
