@@ -114,15 +114,25 @@
                     processData: false,
                     contentType: false
                 }).done(function(res) {
-                    console.log("done");
+                    console.log("ajax ok");
                     for(var i in res){
-                        parseObuData(res[i]);
+                        var data = res[i];
+                        if(data.type == "bsmFrame"){
+                            parseAsnBsm(data);
+                        }else if(data.type == "rsmFrame"){
+                            parseAsnRsm(data);
+                        }else if(data.type == "rsiFrame"){
+                            parseAsnRsi(data);
+                        }else if(data.type == "mapFrame"){
+                            parseAsnMap(data);
+                        }else if(data.type == "spatFrame"){
+                            parseAsnSpat(data);
+                        }
                     }
                 }).fail(function(res) {
-                    console.log("fail");
-                    console.log(res);
+                    console.log("ajax fail : "+res);
                 });
-                console.log($(this)[0].files);
+                $(this).val("");
             });
 
 

@@ -4,14 +4,16 @@ from flask              import Flask,request,render_template
 from flask_socketio     import SocketIO,emit,join_room,leave_room
 from engineio.payload   import Payload
 
-from obu.obu_abstract   import getTimeStr,checkIp
+from obu.obu            import *
 from web.map_downloader import MapDownloader
+
 
 
 '''去掉恶心的log'''
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
 '''默认16,导致engineio老是打印说太少'''
 Payload.max_decode_packets  = 50
+
 
 
 _kPort                      = 80
@@ -66,7 +68,7 @@ def index():
                 str+='--'+arr[1]
             if len(str) > 0:
                 dev_list += '<li><a target="_blank" href="device?'
-                dev_list += 'ip='+ip+'&n='+name+'&asn='+_kAsnType
+                dev_list += 'ip='+ip+'&port='+'30000'+'&obu='+_kObuType+'&asn='+_kAsnType+'&n='+name
                 dev_list += '">'+str+'</a></li>'
     if len(dev_list) > 0:
         dev_list ='<ol>' + dev_list +'</ol>'
@@ -77,11 +79,7 @@ def index():
 
 @_app.route('/device', methods=['GET'])
 def device():
-    ip = request.args.get('ip')
-    if checkIp(ip):
-        return render_template('device.html')
-    else:
-        return 'wrong ip'
+    return render_template('device.html')
 
 
 @_app.route('/asn_upload', methods=['POST'])
@@ -93,7 +91,7 @@ def asnUpload():
         asn_type    = f.name.split('#')[0]
         asn         = _asns.get(asn_type)
         if not asn:
-            print('unsupport asn type -> '+asn_type)
+            print('/asn_upload : unsupport asn type -> '+asn_type)
             continue
         else:
             data    = f.stream.read()
@@ -106,10 +104,33 @@ def asnUpload():
 
 '''---------------------flask_socketio-----------------'''
 def sioSendObuData(data={},ip=''):
-    _socketio.emit('sio_msg',data,to=ip)
+    _socketio.emit('sio_obu_msg',data,to=ip)
 
 def sioSendMapUpdateSiginal():
     _socketio.emit('sio_map_init')
+
+def sioSendErr(err='',sid=''):
+    _socketio.emit('sio_err',err,to=sid)
+
+def roomAddClient(room_id,sid):
+    index   = -1
+    _lock.acquire()
+    room = _room.get(room_id)
+    # if room:
+    #     for i in range(0, len(room)):
+    #         if room[i][0] == sid:
+    #             index   = i
+    #             break
+    # else:
+    #     room            = []
+    #     _room[room_id]  = room
+    #     index           = 0
+    #
+    # _room[ip].append(request.sid)
+    # join_room(ip)
+    # print(getTimeStr(), 'room[' + ip + '] : ' + sid + ' join , len =', len(_room[ip]))
+    _lock.release()
+
 
 @_socketio.on('connect')
 def connect():
@@ -117,6 +138,7 @@ def connect():
 
 @_socketio.on('disconnect')
 def disconnect():
+    pass
     _lock.acquire()
     sid = request.sid
     for ip in _room.keys():
@@ -131,30 +153,29 @@ def disconnect():
 
 
 @_socketio.on('hello')
-def getHello(ip):
+def hello(ip,port,obu_type,asn_type):
+    err = []
+    sid = request.sid
     if not checkIp(ip):
-        print('wrong ip')
-        return
-    obu = _obus.get(_kObuType)
-    asn = _asns.get(_kAsnType)
-    if not obu:
-        print('obu type not supported : ' + _kObuType)
-        return
-    if not asn:
-        print('asn type not supported : ' + _kAsnType)
-        return
-    obu.openDevice(ip, asn_parser=asn.parseAsn, html_sender=sioSendObuData)
-    _lock.acquire()
-    if not _room.get(ip):
-        _room[ip] = []
-    _room[ip].append(request.sid)
-    join_room(ip)
-    print(getTimeStr(),'room[' + ip + '] : ' + request.sid + ' join , len =', len(_room[ip]))
-    _lock.release()
+        err.append('ip格式错误:' + str(ip))
+    if not checkPort(port):
+        err.append('端口格式错误:' + str(port))
+    if not _obus.get(obu_type):
+        err.append('不支持obu类型:' + str(obu_type))
+    if not _asns.get(asn_type):
+        err.append('不支持asn类型:' + str(asn_type))
+    if len(err) == 0:
+        port    = int(port)
+        obu     = _obus.get(obu_type)
+        asn     = _asns.get(asn_type)
+        ret     = obu.openDevice(ip,port,asn_parser=asn.parseAsn, html_sender=sioSendObuData)
+        roomAddClient(ret.room_id,sid)
+    else:
+        sioSendErr(err,sid)
 
 
 @_socketio.on('bounds')
-def getBounds(lat1,lat2,lng1,lng2,zoom,map_type):
+def bounds(lat1,lat2,lng1,lng2,zoom,map_type):
     # print(lat1,lat2,lng1,lng2,zoom,map_type)
     MapDownloader.signal_sender = sioSendMapUpdateSiginal
     MapDownloader.getBounds(lat1,lat2,lng1,lng2,zoom,map_type)

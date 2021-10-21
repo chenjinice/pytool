@@ -24,7 +24,10 @@ var GKD = {
     colors              : ["#FF0000","#00FF00","#FFFF00"],
     color_index         : 0,
 
+    online              :   ifOnLine(),
     sockio              : null,
+    sockio_ready        : false,
+
     map                 : null,
     type                : MapType.LocalGoogleSatellite,
     center              : [41.9016655,123.5177551],
@@ -37,6 +40,16 @@ var GKD = {
 }
 
 
+// 是不是远程网页
+function ifOnLine() {
+    var str = window.location + "";
+    if( str.indexOf("http") == 0 ){
+        return true;
+    }else{
+        return false;
+    }
+}
+
 // 获取url的参数
 function getUrlParam(key){
     var query = window.location.search.substring(1);
@@ -46,7 +59,7 @@ function getUrlParam(key){
         if(pair[0] == key){return pair[1];}
     }
     console.log("getUrlParam "+key+" fail");
-    return(false);
+    return false;
 }
 
 // 获取地图网址
@@ -83,7 +96,15 @@ function getMapUrl(type){
 // 初始化地图
 function mapInit( type = 0 ){
     var url = getMapUrl(type);
-    if (GKD.sockio == null) GKD.sockio = io();
+    if (GKD.sockio == null){
+        GKD.sockio = io();
+        GKD.sockio.on('connect', function(){
+            GKD.sockio_ready    = true;     console.log("sio connect");
+        });
+        GKD.sockio.on('disconnect', function(){
+            GKD.sockio_ready    = false;    console.log("sio disconnect");
+        });
+    }
     if(GKD.map == null){
         GKD.map = L.map('googleMap',{zoomAnimation:true});
         GKD.map.setView(GKD.center,GKD.zoom);

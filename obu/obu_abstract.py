@@ -31,6 +31,10 @@ def getTimeStr():
     str = time.strftime("[%Y-%m-%d %H:%M:%S]", time.localtime())
     return str
 
+def getRoomId(ip, port):
+    return ip+"-"+str(port)
+
+
 def checkIp(ip):
     if not ip:
         return False
@@ -41,12 +45,28 @@ def checkIp(ip):
         return False
 
 
+def checkPort(port):
+    if not port:
+        return False
+    tmp_port = 0
+    if   isinstance(port,int):
+        tmp_port = port
+    elif isinstance(port,str):
+        tmp_port = int(port)
+    else:
+        return False
+    if( tmp_port <= 0 ) or ( tmp_port > 65535):
+        return False
+    else:
+        return True
+
+
 class ObuAbstract(metaclass=abc.ABCMeta):
     ''' obu 抽象类 '''
     s_lock                  = threading.Lock()
     s_cache                 = {}
 
-    def __init__(self, ip, asn_parser=None, html_sender=None):
+    def __init__(self, ip,port=None,asn_parser=None, html_sender=None):
         self.html_sender    = html_sender
         self.lng            = 0
         self.lat            = 0
@@ -58,8 +78,12 @@ class ObuAbstract(metaclass=abc.ABCMeta):
         self.num_st         = 0
 
         self.ip             = ip
-        self.port           = _kDefaultPort
         self.asn_parser     = asn_parser
+        if port:
+            self.port       = port
+        else:
+            self.port = _kDefaultPort
+        self.room_id        = getRoomId(self.ip, self.port)
 
 
     def __del__(self):
@@ -72,10 +96,20 @@ class ObuAbstract(metaclass=abc.ABCMeta):
         pass
 
     @classmethod
-    def openDevice(cls, ip, asn_parser=None, html_sender=None):
+    def openDevice(cls, ip,port=None,asn_parser=None, html_sender=None):
         '''类方法，新建obu类'''
-        tmp = cls(ip,asn_parser=asn_parser,html_sender=html_sender)
-        cls.cacheAdd(tmp)
+        ret     = None
+        room_id = getRoomId(ip,port)
+        cls.s_lock.acquire()
+        if room_id in cls.s_cache:
+            ret = cls.s_cache[room_id]
+            print(cls.__name__ + ':cache exist,id=' + room_id + ',cache len=', len(cls.s_cache))
+        else:
+            ret = cls(ip, port, asn_parser=asn_parser, html_sender=html_sender)
+            cls.s_cache[room_id] = ret
+            print(cls.__name__ + ':cache add,id=' + room_id + ',cache len=', len(cls.s_cache))
+        cls.s_lock.release()
+        return ret
 
     @classmethod
     def closeDevice(cls,ip):
@@ -86,23 +120,24 @@ class ObuAbstract(metaclass=abc.ABCMeta):
     @classmethod
     def cacheAdd(cls, obu):
         '''类方法，把obu类添加到缓存'''
-        if len(obu.ip) == 0:
+        room_id = obu.room_id
+        if len(room_id) == 0:
             return
         cls.s_lock.acquire()
-        if obu.ip in cls.s_cache:
+        if room_id in cls.s_cache:
             pass
         else:
-            cls.s_cache[obu.ip] = obu
-        print(cls.__name__ + ' : cache add , ip = ' + obu.ip + ' , count = ', len(cls.s_cache))
+            cls.s_cache[room_id] = obu
+        print(cls.__name__ + ':cache add,id=' + room_id + ',cache len=', len(cls.s_cache))
         cls.s_lock.release()
 
     @classmethod
-    def cacheDelete(cls, ip):
+    def cacheDelete(cls, room_id):
         '''类方法，从缓存中删除'''
         cls.s_lock.acquire()
-        if ip in cls.s_cache:
-            cls.s_cache[ip].ready = False
-            cls.s_cache[ip].stop()
-            del cls.s_cache[ip]
-            print(cls.__name__ + ' : cache delete , ip = ' + ip + ' , count = ', len(cls.s_cache))
+        if room_id in cls.s_cache:
+            cls.s_cache[room_id].ready = False
+            cls.s_cache[room_id].stop()
+            del cls.s_cache[room_id]
+            print(cls.__name__ + ':cache delete,id=' + room_id + ',cache len=', len(cls.s_cache))
         cls.s_lock.release()

@@ -29,9 +29,13 @@ class ObuSy(ObuAbstract):
         return ObuAbstract.__new__(cls)
 
 
-    def __init__(self, ip, asn_parser=None, html_sender=None):
-        ObuAbstract.__init__(self,ip, asn_parser, html_sender)
-        self.port           = _kObySyPort
+    def __init__(self, ip,port = None,asn_parser=None, html_sender=None):
+        ObuAbstract.__init__(self,ip,port,asn_parser, html_sender)
+        if port:
+            self.port       = port
+        else:
+            self.port       = _kObySyPort
+        self.room_id        = getRoomId(self.ip, self.port)
         self.buffsize       = _kUdpBuffSize
         self.udp_fd         = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_fd.bind( ('',0) )

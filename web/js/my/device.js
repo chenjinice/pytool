@@ -6,16 +6,19 @@
 // 本文件变量
 var Sdev ={
     ip          :   "127.0.0.1",
-    name        :   "---",   
+    port        :   "30000",
+    obu_type    :   "obusy",
     asn_type    :   "asn2020",
+    name        :   "",   
     host_car    : 	null,
     timer       : 	null,
+    heart_ms    :   0,
+    
     map         : 	[],
     rsi         : 	[],
     rsm         : 	[],
     bsm         : 	[],
     spat        :   [],
-    online      :   ifOnLine(),
 	cfg			: 	{
                         div_cfg         : true,
                         div_tool        : true,
@@ -32,45 +35,63 @@ var Sdev ={
 
 // 初始化函数
 function deviceInitAll(){
-    var ip          = getUrlParam('ip');
-    var name        = decodeURI(getUrlParam('n'));
-    var asn_type    = getUrlParam('asn');
-    ip          ?   Sdev.ip         = ip        :0;
-    name        ?   Sdev.name       = name      :0;
-    asn_type    ?   Sdev.asn_type   = asn_type  :0;
+    var ip                  = getUrlParam('ip');
+    var port                = getUrlParam('port');
+    var obu_type            = getUrlParam('obu');
+    var asn_type            = getUrlParam('asn');
+    var name                = getUrlParam('n');
+    if(ip       != false)   Sdev.ip         = ip;
+    if(port     != false)   Sdev.port       = port;
+    if(obu_type != false)   Sdev.obu_type   = obu_type;
+    if(asn_type != false)   Sdev.asn_type   = asn_type;
+    if(name     != false)   Sdev.name       = decodeURI(name);
     $("title").html(Sdev.ip+" "+Sdev.name);
-
     mapInit();
-	
-    GKD.sockio.on('connect', function(){
-        GKD.sockio.emit('hello',Sdev.ip);
-    });
+    GKD.sockio.on('connect',function(){
+        GKD.sockio.emit('hello',Sdev.ip,Sdev.port,Sdev.obu_type,Sdev.asn_type);
+    })
     GKD.sockio.on('sio_map_init',function(){
         mapInit();
     })
-    GKD.sockio.on('sio_msg',function(data){
-        parseObuData(data);
+    GKD.sockio.on('sio_err',function(err){
+        console.log(err);
+    })
+    GKD.sockio.on('sio_obu_msg',function(data){
+        if(data.type == "host_pt"){
+            updateHostCar(data);
+        }else if(data.type == "bsmFrame"){
+            if(Sdev.cfg.bsm)parseAsnBsm(data);
+        }else if(data.type == "rsmFrame"){
+            if(Sdev.cfg.rsm)parseAsnRsm(data);
+        }else if(data.type == "rsiFrame"){
+            if(Sdev.cfg.rsi)parseAsnRsi(data);
+        }else if(data.type == "mapFrame"){
+            if(Sdev.cfg.map)parseAsnMap(data);
+        }else if(data.type == "spatFrame"){
+            if(Sdev.cfg.spat)parseAsnSpat(data);
+        }
     });
     // timer
     if(Sdev.timer == null){
-        Sdev.timer  = self.setInterval("intervalFun()",300);
+        Sdev.timer  = self.setInterval("intervalFun()",500);
     }
 }
 
-// 解析数据
-function parseObuData(data){
-    if(data.type == "host_pt"){
-        updateHostCar(data);
-    }else if(data.type == "bsmFrame"){
-        if(Sdev.cfg.bsm)parseAsnBsm(data);
-    }else if(data.type == "rsmFrame"){
-        if(Sdev.cfg.rsm)parseAsnRsm(data);
-    }else if(data.type == "rsiFrame"){
-        if(Sdev.cfg.rsi)parseAsnRsi(data);
-    }else if(data.type == "mapFrame"){
-        if(Sdev.cfg.map)parseAsnMap(data);
-    }else if(data.type == "spatFrame"){
-        if(Sdev.cfg.spat)parseAsnSpat(data);
+// 定时跑的函数
+function intervalFun(){
+    clearOldPtc(1000);
+    clearOldBsm(1500);
+    sioHeartBeat(3000);
+}
+
+// 发送保活心跳
+function sioHeartBeat(ms) {
+    if(GKD.sockio_ready == false ) return;
+    var now             = Date.now();
+    var t = now - Sdev.heart_ms;
+    if(t > ms){
+        Sdev.heart_ms   = now;
+        GKD.sockio.emit('heart_beat',Sdev.ip);
     }
 }
 
@@ -114,30 +135,16 @@ function clearCache() {
     clearAll();  
 }
 
-// 定时跑的函数
-function intervalFun(){
-    clearOldPtc(1000);
-    clearOldBsm(1500);
-}
-
-function ifOnLine() {
-    var str = window.location + "";
-    if( str.indexOf("http") == 0 ){
-        return true;
-    }else{
-        return false;
-    }
-}
 
 function setDevCfg(key,value){
 	Sdev.cfg[key] = value;
-    if(Sdev.online){
+    if(GKD.online){
         $.cookie(Sdev.ip + "-" + key,value.toString(),{expires:365});
     }
 }
 
 function getDevCfg(){
-    if(Sdev.online){
+    if(GKD.online){
         for(var key in Sdev.cfg){
             var value = $.cookie(Sdev.ip + "-" + key);
             if (typeof(value) != "undefined"){
