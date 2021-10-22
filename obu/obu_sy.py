@@ -8,7 +8,6 @@ from obu.obu_abstract import *
 
 
 '''--------------------沈阳OBU，asn为新四跨版本-----------------------------'''
-_kObySyPort         = 30000
 _kUdpBuffSize       = 4096
 _kHeartInterval     = 2
 
@@ -22,35 +21,33 @@ class ObuSy(ObuAbstract):
 
     '创建一个所有obu发心跳的线程，只会创建一次'
     def __new__(cls, *args, **kwargs):
+        p = ObuAbstract.__new__(cls)
         cls.s_thread_lock.acquire()
         if cls.s_thread == None:
             cls.s_thread = _thread.start_new_thread(cls.__heartThread, ())
         cls.s_thread_lock.release()
-        return ObuAbstract.__new__(cls)
+        return p
 
 
-    def __init__(self, ip,port = None,asn_parser=None, html_sender=None):
+    def __init__(self, ip,port = 30000,asn_parser=None, html_sender=None):
         ObuAbstract.__init__(self,ip,port,asn_parser, html_sender)
-        if port:
-            self.port       = port
-        else:
-            self.port       = _kObySyPort
-        self.room_id        = getRoomId(self.ip, self.port)
+        self.port           = port
+        self.room_id        = self.getRoomId(self.ip, self.port)
         self.buffsize       = _kUdpBuffSize
         self.udp_fd         = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_fd.bind( ('',0) )
         self.ready          = True
         _thread.start_new_thread(self._start,())
 
+
     '类方法，发送心跳线程'
     @classmethod
     def __heartThread(cls):
         while True:
-            cls.s_lock.acquire()
+            cls.s_cache_lock.acquire()
             for obu in cls.s_cache.values():
                 obu.__sendHeart()
-            cls.s_lock.release()
-            print(cls.__name__+':cache len=',len(cls.s_cache))
+            cls.s_cache_lock.release()
             time.sleep(_kHeartInterval)
 
 

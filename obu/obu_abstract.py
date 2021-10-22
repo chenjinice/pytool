@@ -1,10 +1,7 @@
 
 ''' obu通用数据 '''
 
-import re
-import abc
-import time
-import threading
+import re,abc,time,_thread,threading
 
 
 '''------支持的所有obu-------'''
@@ -12,12 +9,12 @@ obuAll      = {}
 
 
 '''----'''
-_kDefaultPort           = 10000
+_kClearInterval         = 5
+_kClientTimeout         = 8.0
 
 
 '''----------key----------'''
 oPositionType           = 'host_pt'
-
 oType                   = 'type'
 oIp                     = 'ip'
 oLng                    = 'lng'
@@ -30,14 +27,11 @@ oHdop                   = 'hdop'
 oModel                  = 'model'
 
 
+'''-----'''
 
 def getTimeStr():
     str = time.strftime("[%Y-%m-%d %H:%M:%S]", time.localtime())
     return str
-
-def getRoomId(ip, port):
-    return ip+"-"+str(port)
-
 
 def checkIp(ip):
     if not ip:
@@ -47,7 +41,6 @@ def checkIp(ip):
         return True
     else:
         return False
-
 
 def checkPort(port):
     if not port:
@@ -65,12 +58,21 @@ def checkPort(port):
         return True
 
 
+
+
 class ObuAbstract(metaclass=abc.ABCMeta):
     ''' obu 抽象类 '''
-    s_lock                  = threading.Lock()
+    s_clear_thread          = None
+    s_clear_thread_lock     = threading.Lock()
     s_cache                 = {}
+    s_cache_lock            = threading.Lock()
 
-    def __init__(self, ip,port=None,asn_parser=None, html_sender=None):
+
+    def __new__(cls, *args, **kwargs):
+
+        return object.__new__(cls)
+
+    def __init__(self, ip,port=9527,asn_parser=None, html_sender=None):
         self.html_sender    = html_sender
         self.lng            = 0
         self.lat            = 0
@@ -80,15 +82,12 @@ class ObuAbstract(metaclass=abc.ABCMeta):
         self.hdop           = 999
         self.model          = 0
         self.num_st         = 0
-
         self.ip             = ip
+        self.port           = port
         self.asn_parser     = asn_parser
-        if port:
-            self.port       = port
-        else:
-            self.port = _kDefaultPort
-        self.room_id        = getRoomId(self.ip, self.port)
-
+        self.room_id        = self.getRoomId(self.ip, self.port)
+        self.clients        = {}
+        self.ready          = False
 
     def __del__(self):
         self.stop()
@@ -99,21 +98,31 @@ class ObuAbstract(metaclass=abc.ABCMeta):
         '''抽象方法,关闭obu连接，需要子类实现'''
         pass
 
+
     @classmethod
-    def openDevice(cls, ip,port=None,asn_parser=None, html_sender=None):
-        '''类方法，新建obu类'''
-        ret     = None
-        room_id = getRoomId(ip,port)
-        cls.s_lock.acquire()
+    def getRoomId(cls,ip,port):
+        return cls.__name__+'#'+ip + "#" + str(port)
+
+
+    @classmethod
+    def openDevice(cls, ip,port=9527,asn_parser=None,html_sender=None,sid='x'):
+        cls.s_clear_thread_lock.acquire()
+        if cls.s_clear_thread == None:
+            cls.s_clear_thread = _thread.start_new_thread(cls.clearAllThread, ())
+        cls.s_clear_thread_lock.release()
+        room_id     = cls.getRoomId(ip, port)
+        cls.s_cache_lock.acquire()
         if room_id in cls.s_cache:
-            ret = cls.s_cache[room_id]
-            print(cls.__name__ + ':cache exist,id=' + room_id + ',cache len=', len(cls.s_cache))
+            obu                     = cls.s_cache[room_id]
+            print(getTimeStr(),cls.__name__ + ' exist, room_id = ' + room_id + ' , obu num = ', len(cls.s_cache))
         else:
-            ret = cls(ip, port, asn_parser=asn_parser, html_sender=html_sender)
-            cls.s_cache[room_id] = ret
-            print(cls.__name__ + ':cache add,id=' + room_id + ',cache len=', len(cls.s_cache))
-        cls.s_lock.release()
-        return ret
+            obu                     = cls(ip, port, asn_parser=asn_parser, html_sender=html_sender)
+            cls.s_cache[room_id]    = obu
+            print(getTimeStr(),cls.__name__ + ' open, room_id = ' + room_id + ' , obu num = ', len(cls.s_cache))
+            obu.setClient(sid, time.time())
+        cls.s_cache_lock.release()
+        return obu
+
 
     @classmethod
     def closeDevice(cls,ip):
@@ -122,26 +131,49 @@ class ObuAbstract(metaclass=abc.ABCMeta):
 
 
     @classmethod
-    def cacheAdd(cls, obu):
-        '''类方法，把obu类添加到缓存'''
-        room_id = obu.room_id
-        if len(room_id) == 0:
-            return
-        cls.s_lock.acquire()
-        if room_id in cls.s_cache:
-            pass
-        else:
-            cls.s_cache[room_id] = obu
-        print(cls.__name__ + ':cache add,id=' + room_id + ',cache len=', len(cls.s_cache))
-        cls.s_lock.release()
-
-    @classmethod
     def cacheDelete(cls, room_id):
         '''类方法，从缓存中删除'''
-        cls.s_lock.acquire()
+        cls.s_cache_lock.acquire()
         if room_id in cls.s_cache:
-            cls.s_cache[room_id].ready = False
+            cls.s_cache[room_id].ready      = False
             cls.s_cache[room_id].stop()
             del cls.s_cache[room_id]
-            print(cls.__name__ + ':cache delete,id=' + room_id + ',cache len=', len(cls.s_cache))
-        cls.s_lock.release()
+            print(getTimeStr(),cls.__name__ + ' : delete (room_id)' + room_id + ' , obu num = ', len(cls.s_cache))
+        cls.s_cache_lock.release()
+
+
+    @classmethod
+    def clearAllThread(cls):
+        while True:
+            cls.s_cache_lock.acquire()
+            for k in list(cls.s_cache):
+                obu = cls.s_cache[k]
+                l   = obu.removeOldClient()
+                if l == 0:
+                    del cls.s_cache[k]
+                print(getTimeStr(),'room_id = ' + obu.room_id + ' , client num = ',l)
+            cls.s_cache_lock.release()
+            time.sleep(_kClearInterval)
+
+
+    @classmethod
+    def updateAllClient(cls,sid,t):
+        cls.s_cache_lock.acquire()
+        for k in cls.s_cache:
+            cls.s_cache[k].setClient(sid, t)
+        cls.s_cache_lock.release()
+
+
+    def setClient(self, sid, t):
+        if sid:
+            self.clients[sid]    = t
+
+
+    def removeOldClient(self):
+        now = time.time()
+        for k in list(self.clients):
+            t = now - self.clients[k]
+            if t > _kClientTimeout:
+                del self.clients[k]
+                print(getTimeStr(),'room_id = '+self.room_id+' , del '+k+' , client num = ',len(self.clients))
+        return len(self.clients)

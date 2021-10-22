@@ -5,6 +5,7 @@ from flask_socketio     import SocketIO,emit,join_room,leave_room
 from engineio.payload   import Payload
 
 from obu.obu            import *
+from asn.asn            import *
 from web.map_downloader import MapDownloader
 
 
@@ -15,7 +16,7 @@ logging.getLogger('werkzeug').setLevel(logging.ERROR)
 Payload.max_decode_packets  = 50
 
 
-
+_kClientTimeout             = 10.0
 _kPort                      = 80
 _kObuType                   = 'obusy'
 _kAsnType                   = 'asn2020'
@@ -26,10 +27,10 @@ _index_html                 = os.path.join(_cur_dir, 'index.html')
 _html_dir                   = os.path.join(_cur_dir, '')
 _app                        = Flask('chen_server', static_url_path='', static_folder=_html_dir, template_folder=_html_dir)
 _socketio                   = SocketIO(_app, ping_interval=10,ping_timeout=60*60*24)
-_room                       = {}
+_rooms                       = {}
 _lock                       = threading.Lock()
-_obus                       = {}
-_asns                       = {}
+_obus                       = obuAll
+_asns                       = asnAll
 
 
 
@@ -38,13 +39,9 @@ def serverFun():
     # _app.run(port=_kPort)
     _socketio.run(_app, port=_kPort)
 
-def startServer(obus={},asns={},bg=False):
-    global _obus
-    global _asns
-    _obus   = obus
-    _asns   = asns
+def startServer(bg=False):
     if bg :
-        thread = _thread.start_new_thread(serverFun,())
+        _thread.start_new_thread(serverFun,())
     else:
         serverFun()
 
@@ -103,6 +100,7 @@ def asnUpload():
 
 
 '''---------------------flask_socketio-----------------'''
+
 def sioSendObuData(data={},ip=''):
     _socketio.emit('sio_obu_msg',data,to=ip)
 
@@ -112,25 +110,6 @@ def sioSendMapUpdateSiginal():
 def sioSendErr(err='',sid=''):
     _socketio.emit('sio_err',err,to=sid)
 
-def roomAddClient(room_id,sid):
-    _lock.acquire()
-    t       = time.time()
-    room    = _room.get(room_id)
-    if not room:
-        _room[room_id]  = []
-        room            = _room[room_id]
-    exist = False
-    for i in range(0, len(room)):
-        if room[i][0] == sid:
-            exist       = True
-            room[i][1]  = t
-            break
-    if not exist:
-        room.append([sid,t])
-
-    join_room(room_id)
-    print(getTimeStr(), 'room[' + room_id + '] new join,sid= ' + sid + ',room len =', len(_room[room_id]))
-    _lock.release()
 
 
 @_socketio.on('connect')
@@ -140,18 +119,6 @@ def connect():
 @_socketio.on('disconnect')
 def disconnect():
     pass
-    _lock.acquire()
-    sid = request.sid
-    for ip in _room.keys():
-        while sid in _room[ip]:
-            _room[ip].remove(sid)
-            leave_room(ip, sid)
-            print(getTimeStr(), 'room[' + ip + '] : ' + sid + ' leave , len =', len(_room[ip]))
-            obu     = _obus.get(_kObuType)
-            if ( len(_room[ip]) == 0 ) and obu:
-                obu.closeDevice(ip)
-    _lock.release()
-
 
 @_socketio.on('hello')
 def hello(ip,port,obu_type,asn_type):
@@ -165,15 +132,21 @@ def hello(ip,port,obu_type,asn_type):
         err.append('不支持obu类型:' + str(obu_type))
     if not _asns.get(asn_type):
         err.append('不支持asn类型:' + str(asn_type))
-    if len(err) == 0:
-        port    = int(port)
-        obu     = _obus.get(obu_type)
-        asn     = _asns.get(asn_type)
-        ret     = obu.openDevice(ip,port,asn_parser=asn.parseAsn, html_sender=sioSendObuData)
-        roomAddClient(ret.room_id,sid)
-    else:
-        sioSendErr(err,sid)
+    if len(err) > 0:
+        sioSendErr(err, sid)
+        return
+    port_int    = int(port)
+    obu_class   = _obus.get(obu_type)
+    asn_class   = _asns.get(asn_type)
+    obu         = obu_class.openDevice(ip,port_int,asn_parser=asn_class.parseAsn, html_sender=sioSendObuData,sid=sid)
+    join_room(obu.room_id)
 
+@_socketio.on('heart_beat')
+def heartBeat():
+    sid = request.sid
+    now = time.time()
+    for k in obuAll:
+        obuAll[k].updateAllClient(sid,now)
 
 @_socketio.on('bounds')
 def bounds(lat1,lat2,lng1,lng2,zoom,map_type):

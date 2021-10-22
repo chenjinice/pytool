@@ -73,7 +73,7 @@ function deviceInitAll(){
     });
     // timer
     if(Sdev.timer == null){
-        Sdev.timer  = self.setInterval("intervalFun()",500);
+        Sdev.timer  = self.setInterval("intervalFun()",300);
     }
 }
 
@@ -81,7 +81,7 @@ function deviceInitAll(){
 function intervalFun(){
     clearOldPtc(1000);
     clearOldBsm(1500);
-    sioHeartBeat(3000);
+    sioHeartBeat(2000);
 }
 
 // 发送保活心跳
@@ -91,7 +91,7 @@ function sioHeartBeat(ms) {
     var t = now - Sdev.heart_ms;
     if(t > ms){
         Sdev.heart_ms   = now;
-        GKD.sockio.emit('heart_beat',Sdev.ip);
+        GKD.sockio.emit('heart_beat');
     }
 }
 
@@ -291,7 +291,7 @@ function checkRsiExist(rsi_type,alert_type,lng,lat){
         Sdev.rsi.push(tmp);
         if(Sdev.rsi.length > 50){
             var tmp = Sdev.rsi.pop();
-            GKD.map.removeLayer(tmp);
+            mapDeleteLayer(tmp);
         }
     }
     return flag;
@@ -360,7 +360,7 @@ function clearOldPtc(ms = 1000) {
     Sdev.rsm.forEach(function(item, index, arr) {
         var t = now - item.ms;
         if(t > ms){
-            GKD.map.removeLayer(item);
+            mapDeleteLayer(item);
             arr.splice(index, 1);
         }
     });
@@ -410,7 +410,7 @@ function clearOldBsm(ms = 1500) {
     Sdev.bsm.forEach(function(item, index, arr) {
         var t = now - item.ms;
         if(t > ms){
-            GKD.map.removeLayer(item);
+            mapDeleteLayer(item);
             arr.splice(index, 1);
         }
     });

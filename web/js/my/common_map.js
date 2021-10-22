@@ -130,6 +130,15 @@ function cacheLayer(layer){
     GKD.layers.push(layer); 
 }
 
+// 删除layer
+function mapDeleteLayer(layer){
+    GKD.map.removeLayer(layer);
+    GKD.group.removeLayer(layer);
+    for (var i = 0; i < GKD.layers.length; i++) {
+        if (GKD.layers[i] == layer)
+            GKD.layers.splice(i, 1)
+    }
+}
 
 // 地图清除所有 layers
 function clearAll(){
