@@ -24,7 +24,7 @@ var GKD = {
     colors              : ["#FF0000","#00FF00","#FFFF00"],
     color_index         : 0,
 
-    online              :   ifOnLine(),
+    online              : ifOnLine(),
     sockio              : null,
     sockio_ready        : false,
 
@@ -35,8 +35,8 @@ var GKD = {
     zoom                : 17,
     min_zoom            : 3,
     max_zoom            : 22,
-    layers              : [],
-    group               : null,
+    group               : L.layerGroup(),
+    cluser              : L.markerClusterGroup(),
 }
 
 
@@ -108,50 +108,28 @@ function mapInit( type = 0 ){
     if(GKD.map == null){
         GKD.map = L.map('googleMap',{zoomAnimation:true});
         GKD.map.setView(GKD.center,GKD.zoom);
-        if(GKD.sockio != null){
-            GKD.map.on("move",function(event){
-                var b       = GKD.map.getBounds();
-                var zoom    = GKD.map.getZoom();
-                GKD.sockio.emit("bounds",b.getSouth(),b.getNorth(),b.getWest(),b.getEast(),zoom,GKD.type);
-            })
-        }
+        GKD.map.addLayer(GKD.group);
+        GKD.map.on("move",function(event){
+            var b       = GKD.map.getBounds();
+            var zoom    = GKD.map.getZoom();
+            GKD.sockio.emit("bounds",b.getSouth(),b.getNorth(),b.getWest(),b.getEast(),zoom,GKD.type);
+        })
     }
     if(GKD.map.hasLayer(GKD.street))GKD.map.removeLayer(GKD.street);
     GKD.street = L.tileLayer(url,{ minZoom: GKD.min_zoom,maxZoom: GKD.max_zoom,subdomains:['mt0','mt1','mt2','mt3']});
-    GKD.street.addTo(GKD.map);
-    if(GKD.group == null){
-        GKD.group = L.markerClusterGroup();
-        GKD.map.addLayer(GKD.group);
-    }
-}
-
-// 缓存 layer，方便删除
-function cacheLayer(layer){
-    GKD.layers.push(layer); 
-}
-
-// 删除layer
-function mapDeleteLayer(layer){
-    GKD.map.removeLayer(layer);
-    GKD.group.removeLayer(layer);
-    for (var i = 0; i < GKD.layers.length; i++) {
-        if (GKD.layers[i] == layer)
-            GKD.layers.splice(i, 1)
-    }
+    GKD.map.addLayer(GKD.street);
+    GKD.map.addLayer(GKD.cluser);
 }
 
 // 地图清除所有 layers
-function clearAll(){
-    for(var i=0;i<GKD.layers.length;i++){
-        GKD.map.removeLayer(GKD.layers[i]);
-    }
-    GKD.group.clearLayers(); 
+function myClear(){
+    GKD.group.clearLayers();
+    GKD.cluser.clearLayers(); 
 }
 
 // 添加可移动的marker
-function addMarker(lng,lat,pan=false){
-    var marker = L.marker([lat,lng]).addTo(GKD.map);
-    cacheLayer(marker);
+function addMarker(lng,lat,pan=0){
+    var marker = L.marker([lat,lng]).addTo(GKD.group);
     marker.dragging.enable();
     marker.bindPopup("lng : "+lng+"</br>lat : "+lat);
     marker.on('dragend',function(event){
@@ -160,59 +138,30 @@ function addMarker(lng,lat,pan=false){
         var lng_new = pt.lng.toFixed(7);
         marker.setPopupContent("lng : "+lng_new+"</br>lat : "+lat_new);
     });
-    if(pan == true){
-        GKD.map.panTo([lat,lng],{"animate":true,"duration":1});
+    if(pan){
+        GKD.map.panTo([lat,lng],{"animate":true,"duration":pan});
     }
     return marker;
 }
 
 // 添加不能动的marker
-function addFixedMarker(lng,lat,str="",pan=false) {
-    var marker = L.marker([lat,lng]).addTo(GKD.map);
-    cacheLayer(marker);
-    if (str.length){
+function addFixedMarker(lng,lat,str="",pan=0) {
+    var marker = L.marker([lat,lng]).addTo(GKD.group);
+    if (str){
         marker.bindPopup(str);
     }else{
         marker.bindPopup("lng : "+lng+"</br>lat : "+lat);
     }
-    if(pan == true){
-        GKD.map.panTo([lat,lng],{"animate":true,"duration":1});
+    if(pan){
+        GKD.map.panTo([lat,lng],{"animate":true,"duration":pan});
     }
     return marker;
 }
-
 
 // 在地图中心添加marker
 function addMarkerAtCenter(){
     var center = GKD.map.getCenter();
     addMarker(center.lng.toFixed(7),center.lat.toFixed(7));
-    cacheLayer(marker);
 }
 
-
-// 添加线段末端的箭头
-function addLineArrow(latlng,angle,arrow=GKD.arrow1_icon)
-{
-    var marker = L.marker([latlng[0],latlng[1]],{icon:arrow,rotationAngle:angle,rotationOrigin:'center',}).addTo(GKD.map);
-    var tmp_angle = angle;
-    if(tmp_angle < 0)tmp_angle += 360.0;
-    tmp_angle = tmp_angle.toFixed(2);
-    marker.bindPopup("lng : "+latlng[1]+"</br>lat : "+latlng[0] + "</br>angle :"+tmp_angle);
-    cacheLayer(marker);
-}
-
-// 添加带箭头线段
-function addLineWithArrow(latlngs,str="",line_color="#FF0000",arrow=GKD.arrow1_icon){
-    var len = latlngs.length ,angle = 0;
-    if(len == 0 )return;
-    for(var i=0;i<len;i++){
-        if(i<len-1) angle = Math.atan2(latlngs[i+1][1]-latlngs[i][1],latlngs[i+1][0]-latlngs[i][0])*180/Math.PI;
-        addLineArrow(latlngs[i],angle,arrow);
-    }
-    if(len>1){
-        var polyline = L.polyline(latlngs, {color:line_color,weight:5}).addTo(GKD.map);
-        if(str.length > 0) polyline.bindPopup(str);
-        cacheLayer(polyline);
-    }
-}
 

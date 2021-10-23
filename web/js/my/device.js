@@ -4,6 +4,9 @@
 */
 
 // 本文件变量
+var _kDevUiId       = "ui_id";
+var _kDevChild      = "children";
+
 var Sdev ={
     ip          :   "127.0.0.1",
     port        :   "30000",
@@ -20,6 +23,7 @@ var Sdev ={
     bsm         : 	[],
     spat        :   [],
 	cfg			: 	{
+                        rsi_max_count   : 30,
                         div_cfg         : true,
                         div_tool        : true,
                         follow          : true,
@@ -30,8 +34,6 @@ var Sdev ={
 						spat 		    : true,
 					}
 }
-
-
 
 // 初始化函数
 function deviceInitAll(){
@@ -106,7 +108,7 @@ function updateHostCar(data){
     var hdop    = data.hdop.toFixed(1);
     var model   = data.model;
     var pt      = [lat,lng];
-    var str     = "lng : "+lng+"</br>lat : "+lat+"</br>heading : "+heading + "</br>speed : " + speed + " km/h";
+    var str     = "lng : "+lng+"</br>lat : "+lat;
     if(Sdev.host_car == null){
         Sdev.host_car = L.marker(pt,{icon:GKD.car_icon,rotationAngle:data.heading}).addTo(GKD.map);
         Sdev.host_car.bindPopup(str);
@@ -126,15 +128,28 @@ function updateHostCar(data){
 	$("#car_model").html(model);
 }
 
-function clearCache() {
+// -----------------
+function devClearAll() {
+    myClear();
     Sdev.bsm.length     = 0;
     Sdev.map.length     = 0;
     Sdev.rsi.length     = 0;
     Sdev.rsm.length     = 0;
     Sdev.spat.length    = 0;
-    clearAll();  
 }
 
+function arrDeleteFirstOne(arr) {
+    if(arr.length == 0)return;
+    var item    = arr[0];
+    var child   = item[_kDevChild];
+    if(child){
+        for(var i=0;i<child.length;i++){
+            GKD.group.removeLayer(child[i]);
+        }
+    }
+    GKD.group.removeLayer(item);
+    arr.splice(0,1);
+}
 
 function setDevCfg(key,value){
 	Sdev.cfg[key] = value;
@@ -156,6 +171,45 @@ function getDevCfg(){
 }
 
 
+//------------------------------------
+function checkAsnExist(arr,ui_id) {
+    var flag = false;
+    for(var i=0;i<arr.length;i++){
+        var m = arr[i];
+        if(m[_kDevUiId] == ui_id){
+            flag = true;
+            break;
+        }
+    }
+    return flag;
+}
+
+// 添加车道线末端的箭头
+function addAsnLaneArrow(latlng,angle,arr,arrow=GKD.arrow1_icon)
+{
+    var marker = L.marker([latlng[0],latlng[1]],{icon:arrow,rotationAngle:angle,rotationOrigin:'center',}).addTo(GKD.group);
+    var tmp_angle = angle;
+    if(tmp_angle < 0)tmp_angle += 360.0;
+    tmp_angle = tmp_angle.toFixed(2);
+    marker.bindPopup("lng : "+latlng[1]+"</br>lat : "+latlng[0] + "</br>angle :"+tmp_angle);
+    arr.push(marker);
+}
+
+// 添加带箭头车道线
+function addAsnLane(latlngs,str="",arr,line_color="#FF0000",arrow=GKD.arrow1_icon){
+    var len = latlngs.length ,angle = 0;
+    if(len == 0 )return;
+    for(var i=0;i<len;i++){
+        if(i<len-1) angle = Math.atan2(latlngs[i+1][1]-latlngs[i][1],latlngs[i+1][0]-latlngs[i][0])*180/Math.PI;
+        addAsnLaneArrow(latlngs[i],angle,arr,arrow);
+    }
+    if(len>1){
+        var polyline = L.polyline(latlngs, {color:line_color,weight:5}).addTo(GKD.group);
+        if(str.length > 0) polyline.bindPopup(str);
+        arr.push(polyline);
+    }
+}
+
 // ----------- map --------------
 function parseAsnMap(data) {
     for(var i=0;i<data.nodes.length;i++){
@@ -164,31 +218,18 @@ function parseAsnMap(data) {
         var lat = node.refPos.lat.toFixed(7);
         var node_id     = node.id.id;
         var node_region = node.id.region;
-        if( checkMapNodeExist(node_id,node_region) )continue;                
-        var str = "id : "+node_id+"</br>region : "+node_region+"</br>lng : "+lng+"</br>lat : "+lat;
-        addFixedMarker(lng,lat,str);
-        parseAsnMapLanes(node.lanes);
+        var ui_id       = "map_"+node.id.id+"_"+node.id.region;
+        if( checkAsnExist(Sdev.map,ui_id) )continue;
+        var str         = "id : "+node_id+"</br>region : "+node_region+"</br>lng : "+lng+"</br>lat : "+lat;
+        var map         = addFixedMarker(lng,lat,str);
+        map[_kDevUiId]  = ui_id;
+        map[_kDevChild] = [];
+        parseAsnMapLanes(node.lanes,map[_kDevChild]);
+        Sdev.map.push(map);                
     }
 }
 
-function checkMapNodeExist(id,region) {
-    var flag = false;
-    for(var i=0;i<Sdev.map.length;i++){
-        var m = Sdev.map[i];
-        if(m.id != id)continue;
-        if(m.region != region)continue;
-        flag = true;
-    }
-    if(!flag){
-        var tmp     = {};
-        tmp.id      = id;
-        tmp.region  = region;
-        Sdev.map.push(tmp);
-    }
-    return flag;
-}
-
-function parseAsnMapLanes(lanes){
+function parseAsnMapLanes(lanes,arr){
     for(var i=0;i<lanes.length;i++){
         var lane = lanes[i];
         var points = lane.points;
@@ -201,7 +242,7 @@ function parseAsnMapLanes(lanes){
         }
         var str  = "laneID : "+lane.laneID + "</br>laneWidth : " + lane.laneWidth + " 米</br>";
             str += getLaneManeuverStr(lane.maneuvers,lane.movements); 
-        addLineWithArrow(latlngs,str);
+        addAsnLane(latlngs,str,arr);
     }
 }
 
@@ -242,62 +283,48 @@ function parseAsnRsi(data) {
 
 function parseAsnRtes(rtes){
     for(var i=0;i<rtes.length;i++){
-        var rte = rtes[i];
-        var lng = rte.pos.lng.toFixed(7);
-        var lat = rte.pos.lat.toFixed(7);
-        var des = rte.description;
-        var type = rte.eventType;
-        if( checkRsiExist("rte",type,lng,lat) )continue;                
-        var center = [lat,lng];
-        var str      = "eventType : "+type+"</br>description : "+des+"</br>lng : "+lng+"</br>lat : "+lat;
-        var path_str = "eventType : "+type+"</br>description : "+des;
-        addFixedMarker(lng,lat,str);
-        parseAsnRefpaths(rte.referencePaths,path_str);
+        var rte     = rtes[i];
+        var lng     = rte.pos.lng.toFixed(7);
+        var lat     = rte.pos.lat.toFixed(7);
+        var des     = rte.description;
+        var type    = rte.eventType;
+        var ui_id   = "rte"+type+"_"+lng+"_"+lat;
+        if( checkAsnExist(Sdev.rsi,ui_id))continue;                
+        var center      = [lat,lng];
+        var str         = "eventType : "+type+"</br>description : "+des+"</br>lng : "+lng+"</br>lat : "+lat;
+        var path_str    = "eventType : "+type+"</br>description : "+des;
+        var rsi         = addFixedMarker(lng,lat,str);
+        rsi[_kDevUiId]  = ui_id;
+        rsi[_kDevChild] = [];
+        parseAsnRefpaths(rte.referencePaths,path_str,rsi[_kDevChild]);
+        Sdev.rsi.push(rsi);
+        if(Sdev.rsi.length > Sdev.cfg.rsi_max_count)arrDeleteFirstOne(Sdev.rsi);
     }
 }
 
 function parseAsnRtss(rtss){
     for(var i=0;i<rtss.length;i++){
-        var rts = rtss[i];
-        var lng = rts.pos.lng.toFixed(7);
-        var lat = rts.pos.lat.toFixed(7);
-        var des = rts.description;
-        var type = rts.signType;
-        if( checkRsiExist("rts",type,lng,lat) )continue;                
-        var center = [lat,lng];
-        var str      = "signType : "+type+"</br>description : "+des+"</br>lng : "+lng+"</br>lat : "+lat;
-        var path_str = "signType : "+type+"</br>description : "+des;
-        addFixedMarker(lng,lat,str);
-        parseAsnRefpaths(rts.referencePaths,path_str);
+        var rts     = rtss[i];
+        var lng     = rts.pos.lng.toFixed(7);
+        var lat     = rts.pos.lat.toFixed(7);
+        var des     = rts.description;
+        var type    = rts.signType;
+        var ui_id   = "rts"+type+"_"+lng+"_"+lat;
+        if( checkAsnExist(Sdev.rsi,ui_id))continue;             
+        var center      = [lat,lng];
+        var str         = "signType : "+type+"</br>description : "+des+"</br>lng : "+lng+"</br>lat : "+lat;
+        var path_str    = "signType : "+type+"</br>description : "+des;
+        var rsi         = addFixedMarker(lng,lat,str);
+        rsi[_kDevUiId]  = ui_id;
+        rsi[_kDevChild] = [];
+        parseAsnRefpaths(rts.referencePaths,path_str,rsi[_kDevChild]);
+        Sdev.rsi.push(rsi);
+        if(Sdev.rsi.length > Sdev.cfg.rsi_max_count)arrDeleteFirstOne(Sdev.rsi);
     }
 }
 
-function checkRsiExist(rsi_type,alert_type,lng,lat){
-    var flag = false;
-    for(var i=0;i<Sdev.rsi.length;i++){
-        var rsi = Sdev.rsi[i];
-        if(rsi.rsi_type != rsi_type)continue;
-        if(rsi.alert_type != alert_type)continue;
-        if(rsi.lng != lng)continue;
-        if(rsi.lat != lat)continue;
-        flag = true;
-    }
-    if(!flag){
-        var tmp = {};
-        tmp.rsi_type    = rsi_type;
-        tmp.alert_type  = alert_type;
-        tmp.lng         = lng;
-        tmp.lat         = lat;
-        Sdev.rsi.push(tmp);
-        if(Sdev.rsi.length > 50){
-            var tmp = Sdev.rsi.pop();
-            mapDeleteLayer(tmp);
-        }
-    }
-    return flag;
-}
 
-function parseAsnRefpaths(paths,str){
+function parseAsnRefpaths(paths,str,arr){
    for(var i=0;i<paths.length;i++){
         var points = paths[i].activePath;
         var latlngs = [];
@@ -308,7 +335,7 @@ function parseAsnRefpaths(paths,str){
             latlngs.push([plat,plng]);
         }
         str  = "radius : "+paths[i].pathRadius + "</br>" + str;
-        addLineWithArrow(latlngs,str);
+        addAsnLane(latlngs,str,arr);
     }
 }
 // ----------- rsi end --------------
@@ -316,9 +343,6 @@ function parseAsnRefpaths(paths,str){
 
 // ----------- rsm start ------------
 function parseAsnRsm(data) {
-    if(Sdev.timer == null){
-        Sdev.timer  = self.setInterval("clearOldPtc()",1000);
-    }
     for(var i=0;i<data.participants.length;i++) {
         var ptc     = data.participants[i];
         var lng     = ptc.pos.lng.toFixed(7);
@@ -346,11 +370,10 @@ function updatePtc(ptc_id,lng,lat,str) {
         ptc.setPopupContent(str);
         ptc.ms = ms;
     }else{
-        var ptc_new   = L.marker([lat,lng]).addTo(GKD.map);
+        var ptc_new   = L.marker([lat,lng]).addTo(GKD.group);
         ptc_new.ptcId = ptc_id;
         ptc_new.ms    = ms;
         ptc_new.bindPopup(str);
-        cacheLayer(ptc_new);
         Sdev.rsm.push(ptc_new);
     }
 }
@@ -360,7 +383,7 @@ function clearOldPtc(ms = 1000) {
     Sdev.rsm.forEach(function(item, index, arr) {
         var t = now - item.ms;
         if(t > ms){
-            mapDeleteLayer(item);
+            GKD.group.removeLayer(item);
             arr.splice(index, 1);
         }
     });
@@ -396,11 +419,10 @@ function parseAsnBsm(data) {
         bsm.setPopupContent(str);
         bsm.ms = ms;
     }else{
-        var car_new   = L.marker([lat,lng],{icon:GKD.remote_car_icon,rotationAngle:heading}).addTo(GKD.map);
+        var car_new   = L.marker([lat,lng],{icon:GKD.remote_car_icon,rotationAngle:heading}).addTo(GKD.group);
         car_new.id    = id;
         car_new.ms    = ms;
         car_new.bindPopup(str);
-        cacheLayer(car_new);
         Sdev.bsm.push(car_new);
     }
 }
@@ -410,12 +432,13 @@ function clearOldBsm(ms = 1500) {
     Sdev.bsm.forEach(function(item, index, arr) {
         var t = now - item.ms;
         if(t > ms){
-            mapDeleteLayer(item);
+            GKD.group.removeLayer(item);
             arr.splice(index, 1);
         }
     });
 }
 // ----------- bsm end   ------------
+
 
 
 // ----------- spat start -----------

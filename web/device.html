@@ -96,7 +96,7 @@
 			$("#cfg_rsi").change(function() 	    {	setDevCfg("rsi",$(this).prop('checked'));	});
 			$("#cfg_rsm").change(function() 	    {	setDevCfg("rsm",$(this).prop('checked'));	});
 			$("#cfg_spat").change(function()	    {	setDevCfg("spat",$(this).prop('checked'));	});
-            $("#cfg_clear").click(function()        {   clearCache();  });
+            $("#cfg_clear").click(function()        {   devClearAll();  });
             $("#cfg_asn_submit").click(function()   {   
                 return $("#cfg_add_asn").click();  
             });
@@ -168,11 +168,11 @@
 
 
             $("#tool_add_center").click(function()  { addMarkerAtCenter();          });
-            $("#tool_clear").click(function()       { clearCache();                 });
+            $("#tool_clear").click(function()       { devClearAll();                 });
             $("#tool_add_point").click(function()   { 
                 var lng =  parseFloat($("#input_lng").val()).toFixed(7);
                 var lat =  parseFloat($("#input_lat").val()).toFixed(7);
-                addMarker(lng,lat,true);
+                addMarker(lng,lat,0.5);
             });
         })
         </script>
