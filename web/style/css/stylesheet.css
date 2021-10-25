@@ -55,7 +55,7 @@ html,body{
 	top: 	10px;
 	left: 	0px;
 	z-index: 888;
-	width: 100%;
+	/*width: 100%;*/
 	/*background-color: white;*/
 	padding-left: 80px;
 }
@@ -69,6 +69,7 @@ html,body{
 	margin-right: 10px;
 	font-weight: bold;
 	color: white;
+	width: 60px;
 	background-color: black;
 }
 
