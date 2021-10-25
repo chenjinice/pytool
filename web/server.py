@@ -37,7 +37,7 @@ _asns                       = asnAll
 '''-----------api------------'''
 def serverFun():
     # _app.run(port=_kPort)
-    _socketio.run(_app, port=_kPort)
+    _socketio.run(_app,host='127.0.0.1',port=_kPort)
 
 def startServer(bg=False):
     if bg :
