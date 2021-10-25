@@ -62,7 +62,7 @@ def index():
                 str+=ip
             if len(arr) > 1  and  len(arr[1]) > 0:
                 name    = arr[1]
-                str+='--'+arr[1]
+                str+='———'+arr[1]
             if len(str) > 0:
                 dev_list += '<li><a target="_blank" href="device?'
                 dev_list += 'ip='+ip+'&port='+'30000'+'&obu='+_kObuType+'&asn='+_kAsnType+'&n='+name
