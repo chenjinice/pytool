@@ -30,7 +30,8 @@ var GKD = {
 
     map                 : null,
     type                : MapType.LocalGoogleSatellite,
-    center              : [41.9016655,123.5177551],
+    center              : [0,0],
+    // center              : [41.9016655,123.5177551],
     // center           : [28.1128547,112.8668242],
     zoom                : 17,
     min_zoom            : 3,

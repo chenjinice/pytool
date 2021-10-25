@@ -47,9 +47,10 @@
             </div>
         </div>
 
+        <div id="top"></div>
 
-        <div id = "bottom">
-            <div id = "div_cfg">
+        <div id="bottom">
+            <div id="div_cfg">
                 <input type="checkbox" id="cfg_follow" /><span>跟随</span>
                 <input type="checkbox" id="cfg_bsm" /><span>bsm</span>
                 <input type="checkbox" id="cfg_map" /><span>map</span>
@@ -60,14 +61,14 @@
                 <input type="button"   id="cfg_asn_submit"  value="打开asn" />
                 <input type="button"   id="cfg_clear"       value="清空" />
             </div>
-            <div id = "div_tool">
+            <div id="div_tool">
                 经度 <input type="number" id="input_lng" value="" min="-180.0" max="180.0" oninput="if(value < -180)value=-180;if (value > 180) value=180" />
                 纬度 <input type="number" id="input_lat" value="" min="-90.0" max="90.0" oninput="if(value < -90)value=-90;if (value > 90) value=90" />
                 <input type="button" id="tool_add_point" value="加点" />
                 <input type="button" id="tool_add_center" value="中心加点" />
                 <input type="button" id="tool_clear"      value="清空" />
             </div>
-            <div id = "div_status">
+            <div id="div_status">
                 经纬度 : <span id="car_pos">       </span>
                 航向角 : <span id="car_heading">   </span>
                 速度 :   <span id="car_speed">     </span>

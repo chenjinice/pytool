@@ -6,6 +6,7 @@
 // 本文件变量
 var _kDevUiId       = "ui_id";
 var _kDevChild      = "children";
+var _kDevMs         = "ms";
 
 var Sdev ={
     ip          :   "127.0.0.1",
@@ -21,7 +22,6 @@ var Sdev ={
     rsi         : 	[],
     rsm         : 	[],
     bsm         : 	[],
-    spat        :   [],
 	cfg			: 	{
                         rsi_max_count   : 30,
                         div_cfg         : true,
@@ -81,8 +81,10 @@ function deviceInitAll(){
 
 // 定时跑的函数
 function intervalFun(){
-    clearOldPtc(1000);
-    clearOldBsm(1500);
+    var now = Date.now();
+    clearOlds(Sdev.rsm,now,1000);
+    clearOlds(Sdev.bsm,now,1500);
+    clearOldSpat(2000);
     sioHeartBeat(2000);
 }
 
@@ -128,7 +130,7 @@ function updateHostCar(data){
 	$("#car_model").html(model);
 }
 
-// -----------------
+// -------------------------------
 function devClearAll() {
     myClear();
     Sdev.bsm.length     = 0;
@@ -136,6 +138,18 @@ function devClearAll() {
     Sdev.rsi.length     = 0;
     Sdev.rsm.length     = 0;
     Sdev.spat.length    = 0;
+}
+
+function checkAsnExist(arr,ui_id) {
+    var item = null;
+    for(var i=0;i<arr.length;i++){
+        var m = arr[i];
+        if(m[_kDevUiId] == ui_id){
+            item = m;
+            break;
+        }
+    }
+    return item;
 }
 
 function arrDeleteFirstOne(arr) {
@@ -149,6 +163,16 @@ function arrDeleteFirstOne(arr) {
     }
     GKD.group.removeLayer(item);
     arr.splice(0,1);
+}
+
+function clearOlds(array,now=Date.now(),ms = 1500) {
+    array.forEach(function(item, index, arr) {
+        var t = now - item[_kDevMs];
+        if(t > ms){
+            GKD.group.removeLayer(item);
+            arr.splice(index, 1);
+        }
+    });
 }
 
 function setDevCfg(key,value){
@@ -171,27 +195,15 @@ function getDevCfg(){
 }
 
 
-//------------------------------------
-function checkAsnExist(arr,ui_id) {
-    var flag = false;
-    for(var i=0;i<arr.length;i++){
-        var m = arr[i];
-        if(m[_kDevUiId] == ui_id){
-            flag = true;
-            break;
-        }
-    }
-    return flag;
-}
-
+//-------------------------
 // 添加车道线末端的箭头
 function addAsnLaneArrow(latlng,angle,arr,arrow=GKD.arrow1_icon)
 {
     var marker = L.marker([latlng[0],latlng[1]],{icon:arrow,rotationAngle:angle,rotationOrigin:'center',}).addTo(GKD.group);
-    var tmp_angle = angle;
-    if(tmp_angle < 0)tmp_angle += 360.0;
-    tmp_angle = tmp_angle.toFixed(2);
-    marker.bindPopup("lng : "+latlng[1]+"</br>lat : "+latlng[0] + "</br>angle :"+tmp_angle);
+    var ptc_old_angle = angle;
+    if(ptc_old_angle < 0)ptc_old_angle += 360.0;
+    ptc_old_angle = ptc_old_angle.toFixed(2);
+    marker.bindPopup("lng : "+latlng[1]+"</br>lat : "+latlng[0] + "</br>angle :"+ptc_old_angle);
     arr.push(marker);
 }
 
@@ -343,99 +355,62 @@ function parseAsnRefpaths(paths,str,arr){
 
 // ----------- rsm start ------------
 function parseAsnRsm(data) {
+    var ms              = Date.now();
     for(var i=0;i<data.participants.length;i++) {
-        var ptc     = data.participants[i];
-        var lng     = ptc.pos.lng.toFixed(7);
-        var lat     = ptc.pos.lat.toFixed(7);
-        var id      = ptc.ptcId;
-        var type    = ptc.ptcType;
-        var heading = ptc.heading;             
-        var str     = "ptcId : "+id+"</br>type : "+type+"</br>lng : "+lng+"</br>lat : "+lat + "</br>heading : " + heading;
-        updatePtc(id,lat,lng,str);
-    }
-}
-
-function updatePtc(ptc_id,lng,lat,str) {
-    var flag = false;
-    var ptc  = null;
-    var ms   = Date.now();
-    for(var i=0;i<Sdev.rsm.length;i++){
-        var rsm       = Sdev.rsm[i];
-        if(rsm.ptcId != ptc_id)continue;
-        ptc  = rsm;
-        flag = true;
-    }
-    if(flag){
-        ptc.setLatLng([lat,lng]);
-        ptc.setPopupContent(str);
-        ptc.ms = ms;
-    }else{
-        var ptc_new   = L.marker([lat,lng]).addTo(GKD.group);
-        ptc_new.ptcId = ptc_id;
-        ptc_new.ms    = ms;
-        ptc_new.bindPopup(str);
-        Sdev.rsm.push(ptc_new);
-    }
-}
-
-function clearOldPtc(ms = 1000) {
-    var now   = Date.now();
-    Sdev.rsm.forEach(function(item, index, arr) {
-        var t = now - item.ms;
-        if(t > ms){
-            GKD.group.removeLayer(item);
-            arr.splice(index, 1);
+        var ptc         = data.participants[i];
+        var lng         = ptc.pos.lng.toFixed(7);
+        var lat         = ptc.pos.lat.toFixed(7);
+        var id          = ptc.ptcId;
+        var type        = ptc.ptcType;
+        var heading     = ptc.heading;             
+        var ui_id       = "rsm_" + type + "_" + id;
+        var str         = "ptcId : "+id+"</br>type : "+type+"</br>lng : "+lng+"</br>lat : "+lat + "</br>heading : " + heading;
+        var ptc_old     = checkAsnExist(Sdev.rsm,ui_id);
+        if(ptc_old){
+            ptc_old.setLatLng([lat,lng]);
+            ptc_old.setPopupContent(str);
+            ptc_old[_kDevMs] = ms;
+        }else{
+            var ptc_new         = L.marker([lat,lng]).addTo(GKD.group);
+            ptc_new[_kDevUiId]  = ui_id;
+            ptc_new[_kDevMs]    = ms;
+            ptc_new.bindPopup(str);
+            Sdev.rsm.push(ptc_new);
         }
-    });
+    }
 }
 // ----------- rsm end   ------------
 
 
 // ----------- bsm start ------------
 function parseAsnBsm(data) {
-    var flag    = false;
-    var ms      = Date.now();
-    var car     = null;
-    var id      = data.id;
-    var idStr   = data.idString;
-    var lng     = data.pos.lng.toFixed(7);
-    var lat     = data.pos.lat.toFixed(7);
-    var speed   = data.speed.toFixed(2);
-    var heading = data.heading.toFixed(2); 
-    var events  = data.events;
-    var pt      = [lat,lng];
-    var str     = "id : " + id + "</br>id : "+ idStr + "</br>lng : " + lng + "</br>lat : " + lat 
-    str        += "</br>speed : " + speed + " km/h</br>heading : " + heading + "</br>events : " + events;
-
-    for(var i=0;i<Sdev.bsm.length;i++){
-        var bsm       = Sdev.bsm[i];
-        if(bsm.id != id)continue;
-        car  = bsm;
-        flag = true;
-    }
-    if(flag){
-        bsm.setLatLng([lat,lng]);
-        bsm.setRotationAngle(heading);
-        bsm.setPopupContent(str);
-        bsm.ms = ms;
+    var flag        = false;
+    var ms          = Date.now();
+    var car         = null;
+    var id          = data.id;
+    var idStr       = data.idString;
+    var lng         = data.pos.lng.toFixed(7);
+    var lat         = data.pos.lat.toFixed(7);
+    var speed       = data.speed.toFixed(2);
+    var heading     = data.heading.toFixed(2); 
+    var events      = data.events;
+    var pt          = [lat,lng];
+    var ui_id       = "bsm_" + id;
+    var str         = "id : " + id + "</br>idString : "+ idStr + "</br>lng : " + lng + "</br>lat : " + lat 
+    str             += "</br>speed : " + speed + " km/h</br>heading : " + heading + "</br>events : " + events;
+    var bsm_old     = checkAsnExist(Sdev.bsm,ui_id);
+    if(bsm_old){
+        bsm_old.setLatLng([lat,lng]);
+        bsm_old.setRotationAngle(heading);
+        bsm_old.setPopupContent(str);
+        bsm_old[_kDevMs] = ms;
     }else{
-        var car_new   = L.marker([lat,lng],{icon:GKD.remote_car_icon,rotationAngle:heading}).addTo(GKD.group);
-        car_new.id    = id;
-        car_new.ms    = ms;
-        car_new.bindPopup(str);
-        Sdev.bsm.push(car_new);
+        var bsm_new         = L.marker([lat,lng],{icon:GKD.remote_car_icon,rotationAngle:heading}).addTo(GKD.group);
+        bsm_new[_kDevUiId]  = ui_id;
+        bsm_new[_kDevMs]    = ms;
+        bsm_new.bindPopup(str);
+        Sdev.bsm.push(bsm_new);
     }
-}
-
-function clearOldBsm(ms = 1500) {
-    var now   = Date.now();
-    Sdev.bsm.forEach(function(item, index, arr) {
-        var t = now - item.ms;
-        if(t > ms){
-            GKD.group.removeLayer(item);
-            arr.splice(index, 1);
-        }
-    });
 }
 // ----------- bsm end   ------------
 
@@ -443,12 +418,43 @@ function clearOldBsm(ms = 1500) {
 
 // ----------- spat start -----------
 function parseAsnSpat(data) {
+    var now                  = Date.now();
+    var div_spat             = $("#top");
     for(var i=0;i<data.intersections.length;i++) {
-        var section = data.intersections[i];
+        var section         = data.intersections[i];
+        var id              = section.id.id;
+        var region          = section.id.region;
+        var ui_id           = "spat_" + id + "_" + region;
+        var phases_str      = "<div class='div_spat_id'>"+id+"-"+region+"</div>";
         for(var m=0;m<section.phases.length;m++){
-            var phase = section.phases[m];
-            var str   = "id:"+section.id.id+","+section.id.region+"\nphaseId:"+phase.phaseId+"----"+phase.color +" ---- "+phase.leftTime.toFixed(1);
-            // console.log(str); 
+            var phase       = section.phases[m];
+            var phase_id    = phase.phaseId;
+            var color       = phase.color;
+            var t           = phase.leftTime.toFixed(1);
+            // var tmp         = "id:"+id+","+region+"\nphaseId:"+phase.phaseId+"----"+color +" ---- "+t;
+            // console.log(tmp); 
+            phases_str      += '<div class="div_phase '+color+'">'+phase_id+'</br>'+t+'</div>';
+        }
+        var div = $("#"+ui_id);
+        if(div.length > 0){
+            div.html(phases_str);
+            div.attr(_kDevMs,now);    
+        }else{
+            div_spat.append("<div id='"+ui_id+"' "+_kDevMs+"="+now+">"+phases_str+"</div>");
+        }
+    }
+}
+
+function clearOldSpat(ms = 2000){
+    var now                  = Date.now();
+    var spats                = $("#top").children("div");
+
+    for(var i=0;i<spats.length;i++){
+        spat        = $("#"+spats[i].id)
+        spat_ms     = spat.attr(_kDevMs);
+        var t       = now - spat_ms;
+        if(t > ms){
+            spat.remove();
         }
     }
 }

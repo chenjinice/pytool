@@ -49,6 +49,57 @@ html,body{
 	height: 25px;
 }
 
+/*------------------------------*/
+#top{
+	position: fixed;
+	top: 	10px;
+	left: 	0px;
+	z-index: 888;
+	width: 100%;
+	/*background-color: white;*/
+	padding-left: 80px;
+}
+
+#top .div_spat_id{
+	display:inline-block;
+	font-size:	20px;
+	border-radius: 4px;
+	text-align: center;
+	padding: 0px 5px;
+	margin-right: 10px;
+	font-weight: bold;
+	color: white;
+	background-color: black;
+}
+
+#top .div_phase{
+	display:inline-block;
+	font-size: 14px;
+	width: 	40px;
+	height: 40px;
+	border-radius: 20px;
+	text-align: center;
+	margin: 3px 3px;
+	font-weight: bold;
+	line-height: 16px;
+}
+
+#top .red{
+	background-color: #f00;
+}
+
+#top .green{
+	background-color: #0f0;
+}
+
+#top .yellow{
+	background-color: #ff0;
+}
+
+#top .black{
+	color: #fff;
+	background-color: #000;
+}
 
 /*------------------------------*/
 #bottom{
