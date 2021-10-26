@@ -23,7 +23,7 @@ _kAddr                      = 'addr'
 _kUrl                       = 'url'
 _kDir                       = 'dir'
 
-_cur_dir            = os.path.dirname(__file__)
+_cur_dir                    = os.path.dirname(__file__)
 
 
 class ImgInfo():

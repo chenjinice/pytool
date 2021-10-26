@@ -6,6 +6,7 @@ from engineio.payload   import Payload
 
 from obu.obu            import *
 from asn.asn            import *
+from config.config      import *
 from web.map_downloader import MapDownloader
 
 
@@ -18,8 +19,7 @@ Payload.max_decode_packets  = 50
 
 _kClientTimeout             = 10.0
 _kPort                      = 80
-_kObuType                   = 'obusy'
-_kAsnType                   = 'asn2020'
+
 
 _cur_dir                    = os.path.dirname(__file__)
 _vpn_cfg                    = os.path.join(_cur_dir, 'vpn.cfg')
@@ -27,7 +27,7 @@ _index_html                 = os.path.join(_cur_dir, 'index.html')
 _html_dir                   = os.path.join(_cur_dir, '')
 _app                        = Flask('chen_server', static_url_path='', static_folder=_html_dir, template_folder=_html_dir)
 _socketio                   = SocketIO(_app, ping_interval=10,ping_timeout=60*60*24)
-_rooms                       = {}
+_rooms                      = {}
 _lock                       = threading.Lock()
 _obus                       = obuAll
 _asns                       = asnAll
@@ -37,9 +37,11 @@ _asns                       = asnAll
 '''-----------api------------'''
 def serverFun():
     # _app.run(port=_kPort)
-    _socketio.run(_app,host='127.0.0.1',port=_kPort)
+    host_ip                 = CfgData[kCfgKHostIp]
+    _socketio.run(_app,host=host_ip,port=_kPort)
 
 def startServer(bg=False):
+    getConfig()
     if bg :
         _thread.start_new_thread(serverFun,())
     else:
@@ -50,27 +52,27 @@ def startServer(bg=False):
 '''-----------------------flask---------------------'''
 @_app.route('/')
 def index():
-    html_text=""
-    dev_list=""
-    with open(_vpn_cfg, 'r', encoding='utf-8') as f:
-        for line in f.readlines():
-            arr=line.strip().replace(' ','').split(',')
-            str=""
-            ip      = arr[0]
-            name    = ''
+    dev_list = ""
+    for obu_info in CfgData[kCfgKObuInfo]:
+        obu_type = obu_info[kCfgKObuType]
+        obu_port = obu_info[kCfgKObuPort]
+        asn_type = obu_info[kCfgKAsnType]
+        for obu in obu_info[kCfgKObuArray]:
+            tmp_str = ""
+            ip      = obu[0]
+            name    = obu[1]
             if len(ip) > 0 :
-                str+=ip
-            if len(arr) > 1  and  len(arr[1]) > 0:
-                name    = arr[1]
-                str+='———'+arr[1]
-            if len(str) > 0:
+                tmp_str+=ip
+            if len(name) > 0:
+                tmp_str+='———'+name
+            if len(tmp_str) > 0:
                 dev_list += '<li><a target="_blank" href="device?'
-                dev_list += 'ip='+ip+'&port='+'30000'+'&obu='+_kObuType+'&asn='+_kAsnType+'&n='+name
-                dev_list += '">'+str+'</a></li>'
+                dev_list += 'ip='+ip+'&port='+str(obu_port)+'&obu='+obu_type+'&asn='+asn_type+'&n='+name
+                dev_list += '">'+tmp_str+'</a></li>'
     if len(dev_list) > 0:
         dev_list ='<ol>' + dev_list +'</ol>'
     with open(_index_html, 'r', encoding='utf-8') as f:
-        html_text = f.read().replace('${device_list}',dev_list)
+        html_text = f.read().replace('${device_list}', dev_list)
     return html_text
 
 
@@ -133,6 +135,7 @@ def hello(ip,port,obu_type,asn_type):
     if not _asns.get(asn_type):
         err.append('不支持asn类型:' + str(asn_type))
     if len(err) > 0:
+        print(err)
         sioSendErr(err, sid)
         return
     port_int    = int(port)

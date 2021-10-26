@@ -29,8 +29,8 @@ var Sdev ={
                         follow          : true,
 						bsm			    : true,
 						map 		    : true,
-						rsi 		    : true,
-						rsm 		    : true,
+						rsi 		    : false,
+						rsm 		    : false,
 						spat 		    : true,
 					}
 }
