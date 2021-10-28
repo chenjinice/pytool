@@ -271,15 +271,15 @@ function getLaneManeuverStr(maneuvers,movements) {
     }
     str += "  )"
     if(movements.hasOwnProperty("left")){
-        str += "</br>左转灯 : " + movements.left;
+        str += "</br>左转相位 : " + movements.left;
         if(value[1])str += yes_str;
     }
     if(movements.hasOwnProperty("straight")){
-        str += "</br>直行灯 : " + movements.straight;
+        str += "</br>直行相位 : " + movements.straight;
         if(value[0])str += yes_str;
     }
     if(movements.hasOwnProperty("right")){
-        str += "</br>右转灯 : " + movements.right;
+        str += "</br>右转相位 : " + movements.right;
         if(value[2])str += yes_str;
     }
     return str;
