@@ -4,7 +4,7 @@ main.spec
 
 __pycache__/
 web/map/
-build/
+build/*
 
 
 
