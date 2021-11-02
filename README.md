@@ -1,1 +1,4 @@
-# pytool
+
+pytool
+
+pyinstaller -F main.py

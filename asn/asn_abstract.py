@@ -76,7 +76,7 @@ class AsnAbstract(metaclass=abc.ABCMeta):
 
     @classmethod
     def asnInit(cls,version):
-        dir = os.path.join(os.path.dirname(__file__), version)
+        dir = os.path.join(os.path.abspath('.'),'asn' ,version)
         asn_files = []
         for root, dirs, files in os.walk(dir):
             for name in files:

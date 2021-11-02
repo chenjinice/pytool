@@ -1,5 +1,12 @@
 
+
 __pycache__/
 web/map/
+build/
+dist/
+*.spec
+
+!dist/main.exe
+
 
 

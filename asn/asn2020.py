@@ -4,7 +4,6 @@ from asn.asn_abstract import *
 
 '''asn为新四跨版本'''
 _kAsn2020Dir            = 'asn2020'
-_module_name            = str(os.path.basename(__file__)).split('.')[0].lower()
 
 
 '''--------asn分辨率-------'''

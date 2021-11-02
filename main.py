@@ -1,10 +1,9 @@
 
 
-from web.server      import startServer
+from server      import *
 
 
 if __name__ == '__main__':
 
     startServer()
-
 
