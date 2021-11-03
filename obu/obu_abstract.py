@@ -1,6 +1,6 @@
 
 ''' obu通用数据 '''
-
+import gc
 import re,abc,time,_thread,threading
 
 
@@ -69,8 +69,8 @@ class ObuAbstract(metaclass=abc.ABCMeta):
 
 
     def __new__(cls, *args, **kwargs):
-
         return object.__new__(cls)
+
 
     def __init__(self, ip,port=9527,asn_parser=None, html_sender=None):
         self.html_sender    = html_sender
@@ -125,24 +125,6 @@ class ObuAbstract(metaclass=abc.ABCMeta):
 
 
     @classmethod
-    def closeDevice(cls,ip):
-        '''类方法，删除obu设备'''
-        cls.cacheDelete(ip)
-
-
-    @classmethod
-    def cacheDelete(cls, room_id):
-        '''类方法，从缓存中删除'''
-        cls.s_cache_lock.acquire()
-        if room_id in cls.s_cache:
-            cls.s_cache[room_id].ready      = False
-            cls.s_cache[room_id].stop()
-            del cls.s_cache[room_id]
-            print(getTimeStr(),cls.__name__ + ' : delete (room_id)' + room_id + ' , obu num = ', len(cls.s_cache))
-        cls.s_cache_lock.release()
-
-
-    @classmethod
     def clearAllThread(cls):
         while True:
             cls.s_cache_lock.acquire()
@@ -150,8 +132,10 @@ class ObuAbstract(metaclass=abc.ABCMeta):
                 obu = cls.s_cache[k]
                 l   = obu.removeOldClient()
                 if l == 0:
+                    obu.stop()
                     del cls.s_cache[k]
-                print(getTimeStr(),'room_id = ' + obu.room_id + ' , client num = ',l)
+                else:
+                    print(getTimeStr(),'room_id = ' + obu.room_id + ' , client num = ',l)
             cls.s_cache_lock.release()
             time.sleep(_kClearInterval)
 
@@ -160,9 +144,17 @@ class ObuAbstract(metaclass=abc.ABCMeta):
     def updateAllClient(cls,sid,t):
         cls.s_cache_lock.acquire()
         for k in cls.s_cache:
-            cls.s_cache[k].setClient(sid, t)
+            obu = cls.s_cache[k]
+            if obu.findClient(sid):
+                obu.setClient(sid, t)
         cls.s_cache_lock.release()
 
+
+    def findClient(self,sid):
+        if sid in self.clients.keys():
+            return True
+        else:
+            return False
 
     def setClient(self, sid, t):
         if sid:
