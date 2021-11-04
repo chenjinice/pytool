@@ -1,7 +1,11 @@
 
 ''' obu通用数据 '''
-import gc
-import re,abc,time,_thread,threading
+import os,re,abc,time,_thread,threading
+from config import *
+
+
+
+_log_dir                = os.path.join(os.path.abspath('.'),'log')
 
 
 '''------支持的所有obu-------'''
@@ -30,7 +34,7 @@ oModel                  = 'model'
 '''-----'''
 
 def getTimeStr():
-    str = time.strftime("[%Y-%m-%d %H:%M:%S]", time.localtime())
+    str = time.strftime('[%Y-%m-%d %H:%M:%S]', time.localtime())
     return str
 
 def checkIp(ip):
@@ -66,6 +70,7 @@ class ObuAbstract(metaclass=abc.ABCMeta):
     s_clear_thread_lock     = threading.Lock()
     s_cache                 = {}
     s_cache_lock            = threading.Lock()
+    s_pt_file               = _log_dir + '/pt.dat'
 
 
     def __new__(cls, *args, **kwargs):
@@ -88,6 +93,15 @@ class ObuAbstract(metaclass=abc.ABCMeta):
         self.room_id        = self.getRoomId(self.ip, self.port)
         self.clients        = {}
         self.ready          = False
+
+        self.pos_log_flag   = CfgData[kCfgSavePos]
+        self.asn_log_flag   = CfgData[kCfgSaveAsn]
+
+        self.log_dir        = _log_dir + '/' + self.ip
+        if not os.path.exists(self.log_dir):
+            os.makedirs(self.log_dir)
+        self.pos_log_file   = self.log_dir+'/'+time.strftime('/%Y%m%d_%H%M%S.dat', time.localtime())
+
 
     def __del__(self):
         self.stop()
@@ -114,12 +128,12 @@ class ObuAbstract(metaclass=abc.ABCMeta):
         cls.s_cache_lock.acquire()
         if room_id in cls.s_cache:
             obu                     = cls.s_cache[room_id]
-            print(getTimeStr(),cls.__name__ + ' exist, room_id = ' + room_id + ' , obu num = ', len(cls.s_cache))
+            print(getTimeStr(),cls.__name__ + ' exist, room_id = ' + room_id + ' , sid = '+sid+ ' , obu num = ', len(cls.s_cache))
         else:
             obu                     = cls(ip, port, asn_parser=asn_parser, html_sender=html_sender)
             cls.s_cache[room_id]    = obu
-            print(getTimeStr(),cls.__name__ + ' open, room_id = ' + room_id + ' , obu num = ', len(cls.s_cache))
-            obu.setClient(sid, time.time())
+            print(getTimeStr(),cls.__name__ + ' open, room_id = ' + room_id + ' , sid = '+sid+ ' , obu num = ', len(cls.s_cache))
+        obu.setClient(sid, time.time())
         cls.s_cache_lock.release()
         return obu
 
@@ -150,6 +164,16 @@ class ObuAbstract(metaclass=abc.ABCMeta):
         cls.s_cache_lock.release()
 
 
+    @classmethod
+    def saveCurrentPt(cls,sid,name):
+        cls.s_cache_lock.acquire()
+        for k in cls.s_cache:
+            obu = cls.s_cache[k]
+            if obu.findClient(sid):
+                obu.saveSinglePoint(name)
+        cls.s_cache_lock.release()
+
+
     def findClient(self,sid):
         if sid in self.clients.keys():
             return True
@@ -169,3 +193,37 @@ class ObuAbstract(metaclass=abc.ABCMeta):
                 del self.clients[k]
                 print(getTimeStr(),'room_id = '+self.room_id+' , del '+k+' , client num = ',len(self.clients))
         return len(self.clients)
+
+
+    def savePos(self):
+        if not self.pos_log_flag:
+            return
+        pre     = '{\n  "points":[\n'
+        line    = '[' + format(self.lng, '.7f') + ',' + format(self.lat, '.7f') + ',' + format(self.heading,'.2f')
+        line    += ',' + format(self.speed, '.2f') + ',' + format(self.hdop, '.2f')
+        line    += ',"' + time.strftime('%Y:%m:%d-%H:%M:%S', time.localtime()) + '"]'
+        f = open(self.pos_log_file,'a')
+        if f.tell() <= len(pre):
+            f.write(pre+line)
+        else:
+            f.write(',\n'+line)
+        f.close()
+
+
+    def savePosEnd(self):
+        if not self.pos_log_flag:
+            return
+        if not os.path.exists(self.pos_log_file):
+            return
+        f = open(self.pos_log_file, 'a')
+        if f.tell() != 0:
+            f.write('\n]}\n')
+        f.close()
+
+
+    def saveSinglePoint(self,name):
+        line  = time.strftime('[%Y:%m:%d-%H:%M:%S] : ', time.localtime())
+        line += format(self.lng, '.7f') + ',' + format(self.lat, '.7f') + ',' + format(self.heading,'.2f') + ' ---- ' + name + '\n'
+        f = open(self.s_pt_file, 'a')
+        f.write(line)
+        f.close()

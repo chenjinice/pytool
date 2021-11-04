@@ -28,6 +28,7 @@
         <!-- 自己的js -->
         <script src="js/my/common_map.js"></script>
         <script src="js/my/device.js"></script>
+        <script src="js/my/parse_json.js"></script>
     </head>
     
     <body>
@@ -35,8 +36,8 @@
 
         <div id="div_control"></div>
         <div id="div_control_content">
-            <div><input type="checkbox" id="control_tool" />工具</div>
-            <div><input type="checkbox" id="control_cfg"  />配置</div>
+            <div><input type="checkbox" id="control_tool" />离线工具</div>
+            <div><input type="checkbox" id="control_cfg"  />在线工具</div>
             <div>
                 <select id = "control_map_type">
                   <option value="1">在线谷歌卫星</option>
@@ -57,16 +58,19 @@
                 <input type="checkbox" id="cfg_rsi" /><span>rsi</span>
                 <input type="checkbox" id="cfg_rsm" /><span>rsm</span>
                 <input type="checkbox" id="cfg_spat" /><span>spat</span>
-                <input type="file"     id="cfg_add_asn" multiple="multiple" value="asn文件" />
+                <input type="file"     id="cfg_asn_input" multiple="multiple" value="asn文件" />
                 <input type="button"   id="cfg_asn_submit"  value="打开asn" />
-                <input type="button"   id="cfg_clear"       value="清空" />
+                <input type="text"     id="cfg_pname_input"/>
+                <input type="button"   id="cfg_pname_submit" value="存点" />
             </div>
             <div id="div_tool">
                 经度 <input type="number" id="input_lng" value="" min="-180.0" max="180.0" oninput="if(value < -180)value=-180;if (value > 180) value=180" />
                 纬度 <input type="number" id="input_lat" value="" min="-90.0" max="90.0" oninput="if(value < -90)value=-90;if (value > 90) value=90" />
                 <input type="button" id="tool_add_point" value="加点" />
                 <input type="button" id="tool_add_center" value="中心加点" />
-                <input type="button" id="tool_clear"      value="清空" />
+                <input type="file"   id="tool_path_input" multiple="multiple" value="采点文件" />
+                <input type="button" id="tool_path_submit" value="采点文件" />
+                <input type="button" id="tool_clear"    value="清空" />
             </div>
             <div id="div_status">
                 经纬度 : <span id="car_pos">       </span>
@@ -83,7 +87,6 @@
         <script>
         $(document).ready(function(){
             deviceInitAll();
-			
 			var cfg = getDevCfg();
             $("#cfg_follow").attr("checked",cfg.follow);
 			$("#cfg_bsm").attr("checked",cfg.bsm);
@@ -97,11 +100,14 @@
 			$("#cfg_rsi").change(function() 	    {	setDevCfg("rsi",$(this).prop('checked'));	});
 			$("#cfg_rsm").change(function() 	    {	setDevCfg("rsm",$(this).prop('checked'));	});
 			$("#cfg_spat").change(function()	    {	setDevCfg("spat",$(this).prop('checked'));	});
-            $("#cfg_clear").click(function()        {   devClearAll();  });
-            $("#cfg_asn_submit").click(function()   {   
-                return $("#cfg_add_asn").click();  
+            $("#cfg_pname_submit").click(function(){
+                var name = $("#cfg_pname_input").val();
+                GKD.sockio.emit("save_current_pt",name);
             });
-            $("#cfg_add_asn").change(function()     { 
+            $("#cfg_asn_submit").click(function()   {   
+                return $("#cfg_asn_input").click();  
+            });
+            $("#cfg_asn_input").change(function()     { 
                 var formData = new FormData();
                 var f_list = $(this)[0].files;
                 for(var i=0;i<f_list.length;i++){
@@ -165,6 +171,10 @@
                 flag ? obj.show(200) : obj.hide(200);
                 setDevCfg("div_tool",flag);   
             });
+            if(!GKD.online){
+                $("#control_cfg").attr("checked",false);
+                $("#div_cfg").hide();
+            }
 
 
 
@@ -175,6 +185,16 @@
                 var lat =  parseFloat($("#input_lat").val()).toFixed(7);
                 addMarker(lng,lat,0.5);
             });
+            $("#tool_path_submit").click(function()   {   
+                return $("#tool_path_input").click();  
+            });
+            $("#tool_path_input").change(function(){
+                var f_list = $(this)[0].files;
+                parsePathJson(f_list[0].name);
+                $(this).val("");
+            });
+
+
         })
         </script>
 

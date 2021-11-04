@@ -75,6 +75,7 @@ class ObuSy(ObuAbstract):
     def stop(self):
         self.ready      = False
         self.udp_fd.close()
+        self.savePosEnd()
 
 
     def __sendHeart(self):
@@ -92,6 +93,7 @@ class ObuSy(ObuAbstract):
         self.hdop       = hdop  * 1e-1
         self.model      = model
 
+        self.savePos()
         dict            = {}
         dict[oType]     = oPositionType
         dict[oIp]       = self.ip

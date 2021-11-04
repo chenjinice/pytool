@@ -37,7 +37,7 @@ _asns                       = asnAll
 '''-----------api------------'''
 def serverFun():
     # _app.run(port=_kPort)
-    host_ip                     = CfgData[kCfgKHostIp]
+    host_ip                     = CfgData[kCfgHostIp]
     host_port                   = CfgData[kCfgHostPort]
     MapDownloader.signal_sender = sioSendMapUpdateSiginal
     MapDownloader.map_dir       = _cur_dir
@@ -55,11 +55,11 @@ def startServer(bg=False):
 @_app.route('/')
 def index():
     dev_list = ""
-    for obu_info in CfgData[kCfgKObuInfo]:
-        obu_type = obu_info[kCfgKObuType]
-        obu_port = obu_info[kCfgKObuPort]
-        asn_type = obu_info[kCfgKAsnType]
-        for obu in obu_info[kCfgKObuArray]:
+    for obu_info in CfgData[kCfgObuInfo]:
+        obu_type = obu_info[kCfgObuType]
+        obu_port = obu_info[kCfgObuPort]
+        asn_type = obu_info[kCfgAsnType]
+        for obu in obu_info[kCfgObuArray]:
             tmp_str = ""
             ip      = obu[0]
             name    = obu[1]
@@ -157,4 +157,10 @@ def heartBeat():
 def bounds(lat1,lat2,lng1,lng2,zoom,map_type):
     # print(lat1,lat2,lng1,lng2,zoom,map_type)
     MapDownloader.getBounds(lat1,lat2,lng1,lng2,zoom,map_type)
+
+@_socketio.on('save_current_pt')
+def saveCurrentPt(name):
+    sid = request.sid
+    for k in obuAll:
+        obuAll[k].saveCurrentPt(sid, name)
 

@@ -137,6 +137,10 @@ html,body{
 	padding-right: 10px;
 }
 
+#tool_path_input{
+	display: none;
+}
+
 
 
 /*---------------------------------*/
@@ -153,7 +157,10 @@ html,body{
 	padding-right: 10px;
 }
 
-#cfg_add_asn {
+#cfg_asn_input {
 	display: none;
 }
 
+#cfg_pname_input {
+	width:100px;
+}

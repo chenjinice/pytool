@@ -137,7 +137,6 @@ function devClearAll() {
     Sdev.map.length     = 0;
     Sdev.rsi.length     = 0;
     Sdev.rsm.length     = 0;
-    Sdev.spat.length    = 0;
 }
 
 function checkAsnExist(arr,ui_id) {
@@ -199,7 +198,7 @@ function getDevCfg(){
 // 添加车道线末端的箭头
 function addAsnLaneArrow(latlng,angle,arr,arrow=GKD.arrow1_icon)
 {
-    var marker = L.marker([latlng[0],latlng[1]],{icon:arrow,rotationAngle:angle,rotationOrigin:'center',}).addTo(GKD.group);
+    var marker = L.marker(latlng,{icon:arrow,rotationAngle:angle,rotationOrigin:'center',}).addTo(GKD.group);
     var ptc_old_angle = angle;
     if(ptc_old_angle < 0)ptc_old_angle += 360.0;
     ptc_old_angle = ptc_old_angle.toFixed(2);

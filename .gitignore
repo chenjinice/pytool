@@ -1,9 +1,9 @@
 
 
-.idea
+
 __pycache__/
 web/map/
 build/
+log/
 main.spec
-
 
