@@ -189,8 +189,10 @@
                 return $("#tool_path_input").click();  
             });
             $("#tool_path_input").change(function(){
-                var f_list = $(this)[0].files;
-                parsePathJson(f_list[0].name);
+                var file = $(this)[0].files[0];
+                // 谷歌浏览器
+                var url  = window.webkitURL.createObjectURL(file);
+                parsePathJson(url);
                 $(this).val("");
             });
 

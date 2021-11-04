@@ -7,7 +7,7 @@ host_port     : 80
 obu_file      : obu_sy.yaml
 
 save_asn      : true
-save_pos      : true  
+save_pos      : false  
 
 
  
