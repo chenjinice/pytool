@@ -1,8 +1,8 @@
 
 ''' obu通用数据 '''
 import os,re,abc,time,_thread,threading
-from config import *
-
+from config                 import *
+from asn.asn_abstract       import *
 
 
 _log_dir                = os.path.join(os.path.abspath('.'),'log')
@@ -180,6 +180,7 @@ class ObuAbstract(metaclass=abc.ABCMeta):
         else:
             return False
 
+
     def setClient(self, sid, t):
         if sid:
             self.clients[sid]    = t
@@ -227,3 +228,4 @@ class ObuAbstract(metaclass=abc.ABCMeta):
         f = open(self.s_pt_file, 'a')
         f.write(line)
         f.close()
+

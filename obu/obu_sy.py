@@ -66,6 +66,7 @@ class ObuSy(ObuAbstract):
                     if self.asn_parser and self.html_sender:
                         dict = self.asn_parser(data,self.ip)
                         self.html_sender(dict,self.room_id)
+                        self.saveAsn(dict,data)
             except ConnectionResetError:
                 continue
             except OSError:
@@ -108,6 +109,45 @@ class ObuSy(ObuAbstract):
         return dict
 
 
+    def saveAsn(self,dict,data):
+        if not self.asn_log_flag:
+            return
+        msg_type    = dict[lType]
+        if msg_type == 'bsmFrame':
+            tmp = 'bsm_' + dict[lId]
+        elif msg_type == 'mapFrame':
+            nodes = dict[lNodes]
+            if len(nodes) == 0 :
+                return
+            tmp = 'map_' + str(nodes[0][lId][lId])+'_'+str(nodes[0][lId][lRegion])
+        elif msg_type == 'rsmFrame':
+            tmp = 'rsm'
+        elif msg_type == 'spatFrame':
+            nodes = dict[lIntersections]
+            if len(nodes) == 0 :
+                return
+            tmp = 'spat_' + str(nodes[0][lId][lId]) + '_' + str(nodes[0][lId][lRegion])
+        elif msg_type == 'rsiFrame':
+            rtes = dict[lRtes]
+            rtss = dict[lRtss]
+            if len(rtss) > 0:
+                tmp = 'rsi_rts_'+str(rtss[0][lSignType])
+            elif len(rtes) > 0:
+                tmp = 'rsi_rte_'+str(rtes[0][lEventType])
+            else:
+                return
+        else:
+            return
+        f_name = self.log_dir+'/'+tmp+time.strftime('_%Y%m%d_%H%M.dat', time.localtime())
+        if not os.path.exists(f_name):
+            f = open(f_name,'wb')
+            f.write(data)
+            f.close()
+
+
+
 
 '''------------添加到支持的obu-------------'''
 obuAll[ObuSy.__name__.lower()] = ObuSy
+
+
