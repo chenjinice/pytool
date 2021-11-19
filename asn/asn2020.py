@@ -156,7 +156,7 @@ class Asn2020(AsnAbstract):
 
     def __parseBitString(self, bit_string):
         '''bit string转int,涉及到位反转和字节倒序,比较恶心'''
-        ret = lcRoadStraight
+        ret = 0
         if not bit_string:
             return ret
         b_new = bytearray()
@@ -222,7 +222,10 @@ class Asn2020(AsnAbstract):
             else:
                 l_lane[lMovements] = movements
             l_lane[lLaneID] = lane[_kLaneID]
-            l_lane[lManeuvers] = self.__parseBitString(lane.get(_kManeuvers))
+            maneuvers       = self.__parseBitString(lane.get(_kManeuvers))
+            if maneuvers == 0 :
+                maneuvers   = lcRoadStraight
+            l_lane[lManeuvers] = maneuvers
             l_lanes.append(l_lane)
 
     def __parseMovements(self,m, l_m):
