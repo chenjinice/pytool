@@ -146,6 +146,7 @@ class ObuAbstract(metaclass=abc.ABCMeta):
                 obu = cls.s_cache[k]
                 l   = obu.removeOldClient()
                 if l == 0:
+                    obu.savePosEnd()
                     obu.stop()
                     del cls.s_cache[k]
                 else:

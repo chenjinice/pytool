@@ -76,7 +76,6 @@ class ObuSy(ObuAbstract):
     def stop(self):
         self.ready      = False
         self.udp_fd.close()
-        self.savePosEnd()
 
 
     def __sendHeart(self):
