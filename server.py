@@ -101,9 +101,37 @@ def asnUpload():
     return result
 
 
+@_app.route('/pt_upload', methods=['POST'])
+def ptUpload():
+    result          = {}
+    result[oPts]    = []
+    i=0
+    for f in request.files.values():
+        while True:
+            line = f.stream.readline().decode(encoding='utf-8').strip()
+            if not line:
+                break
+            tmp = line.split(']:')
+            if len(tmp) < 2:
+                continue
+            arr = tmp[1].split(',')
+            if len(arr) < 4:
+                continue
+            pt          = {}
+            pt[oLng]    = arr[0]
+            pt[oLat]    = arr[1]
+            pt[oName]   = arr[3]
+            result[oPts].append(pt)
+    return result
+
 
 
 '''---------------------flask_socketio-----------------'''
+class HtmlSender():
+    def __init__(self):
+        self.asn_sender = None
+
+
 
 def sioSendObuData(data={},ip=''):
     _socketio.emit('sio_obu_msg',data,to=ip)

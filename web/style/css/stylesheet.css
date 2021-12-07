@@ -153,11 +153,19 @@ html,body{
 	height: 20px;
 }
 
+#div_cfg select{
+	height: 25px;
+}
+
 #div_cfg span {
 	padding-right: 10px;
 }
 
 #cfg_asn_input {
+	display: none;
+}
+
+#cfg_pt_input {
 	display: none;
 }
 

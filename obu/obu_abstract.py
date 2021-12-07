@@ -31,6 +31,10 @@ oHdop                   = 'hdop'
 oModel                  = 'model'
 
 
+oPts                    = 'pts'
+oName                   = 'name'
+
+
 '''-----'''
 
 def getTimeStr():
@@ -171,7 +175,7 @@ class ObuAbstract(metaclass=abc.ABCMeta):
         for k in cls.s_cache:
             obu = cls.s_cache[k]
             if obu.findClient(sid):
-                obu.saveSinglePoint(name)
+                obu.saveSinglePoint(sid,name)
         cls.s_cache_lock.release()
 
 
@@ -223,10 +227,13 @@ class ObuAbstract(metaclass=abc.ABCMeta):
         f.close()
 
 
-    def saveSinglePoint(self,name):
-        line  = time.strftime('[%Y:%m:%d-%H:%M:%S] : ', time.localtime())
-        line += format(self.lng, '.7f') + ',' + format(self.lat, '.7f') + ',' + format(self.heading,'.2f') + ' ---- ' + name + '\n'
-        f = open(self.s_pt_file, 'a')
+    def saveSinglePoint(self,sid,name):
+        line    = time.strftime('[%Y:%m:%d-%H:%M:%S]:', time.localtime())
+        lng     = format(self.lng, '.7f')
+        lat     = format(self.lat, '.7f')
+        heading = format(self.heading,'.2f')
+        line    += lng + ',' + lat + ',' + heading + ',' + name + '\n'
+        f = open(self.s_pt_file, 'a',encoding='UTF-8')
         f.write(line)
         f.close()
 

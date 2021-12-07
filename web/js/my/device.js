@@ -110,7 +110,7 @@ function updateHostCar(data){
     var hdop    = data.hdop.toFixed(1);
     var model   = data.model;
     var pt      = [lat,lng];
-    var str     = "lng : "+lng+"</br>lat : "+lat;
+    var str     = "lng : "+lng+"<br />lat : "+lat;
     if(Sdev.host_car == null){
         Sdev.host_car = L.marker(pt,{icon:GKD.car_icon,rotationAngle:data.heading}).addTo(GKD.map);
         Sdev.host_car.bindPopup(str);
@@ -202,7 +202,7 @@ function addAsnLaneArrow(latlng,angle,arr,arrow=GKD.arrow1_icon)
     var ptc_old_angle = angle;
     if(ptc_old_angle < 0)ptc_old_angle += 360.0;
     ptc_old_angle = ptc_old_angle.toFixed(2);
-    marker.bindPopup("lng : "+latlng[1]+"</br>lat : "+latlng[0] + "</br>angle :"+ptc_old_angle);
+    marker.bindPopup("lng : "+latlng[1]+"<br />lat : "+latlng[0] + "<br />angle :"+ptc_old_angle);
     arr.push(marker);
 }
 
@@ -231,7 +231,7 @@ function parseAsnMap(data) {
         var node_region = node.id.region;
         var ui_id       = "map_"+node.id.id+"_"+node.id.region;
         if( checkAsnExist(Sdev.map,ui_id) )continue;
-        var str         = "id : "+node_id+"</br>region : "+node_region+"</br>lng : "+lng+"</br>lat : "+lat;
+        var str         = "id : "+node_id+"<br />region : "+node_region+"<br />lng : "+lng+"<br />lat : "+lat;
         var map         = addFixedMarker(lng,lat,str);
         map[_kDevUiId]  = ui_id;
         map[_kDevChild] = [];
@@ -251,7 +251,7 @@ function parseAsnMapLanes(lanes,arr){
             var plat = p.lat.toFixed(7);
             latlngs.push([plat,plng]);
         }
-        var str  = "laneID : "+lane.laneID + "</br>laneWidth : " + lane.laneWidth + " 米</br>";
+        var str  = "laneID : "+lane.laneID + "<br />laneWidth : " + lane.laneWidth + " 米<br />";
             str += getLaneManeuverStr(lane.maneuvers,lane.movements); 
         addAsnLane(latlngs,str,arr);
     }
@@ -270,15 +270,15 @@ function getLaneManeuverStr(maneuvers,movements) {
     }
     str += "  )"
     if(movements.hasOwnProperty("left")){
-        str += "</br>左转相位 : " + movements.left;
+        str += "<br />左转相位 : " + movements.left;
         if(value[1])str += yes_str;
     }
     if(movements.hasOwnProperty("straight")){
-        str += "</br>直行相位 : " + movements.straight;
+        str += "<br />直行相位 : " + movements.straight;
         if(value[0])str += yes_str;
     }
     if(movements.hasOwnProperty("right")){
-        str += "</br>右转相位 : " + movements.right;
+        str += "<br />右转相位 : " + movements.right;
         if(value[2])str += yes_str;
     }
     return str;
@@ -302,8 +302,8 @@ function parseAsnRtes(rtes){
         var ui_id   = "rte"+type+"_"+lng+"_"+lat;
         if( checkAsnExist(Sdev.rsi,ui_id))continue;                
         var center      = [lat,lng];
-        var str         = "eventType : "+type+"</br>description : "+des+"</br>lng : "+lng+"</br>lat : "+lat;
-        var path_str    = "eventType : "+type+"</br>description : "+des;
+        var str         = "eventType : "+type+"<br />description : "+des+"<br />lng : "+lng+"<br />lat : "+lat;
+        var path_str    = "eventType : "+type+"<br />description : "+des;
         var rsi         = addFixedMarker(lng,lat,str);
         rsi[_kDevUiId]  = ui_id;
         rsi[_kDevChild] = [];
@@ -323,8 +323,8 @@ function parseAsnRtss(rtss){
         var ui_id   = "rts"+type+"_"+lng+"_"+lat;
         if( checkAsnExist(Sdev.rsi,ui_id))continue;             
         var center      = [lat,lng];
-        var str         = "signType : "+type+"</br>description : "+des+"</br>lng : "+lng+"</br>lat : "+lat;
-        var path_str    = "signType : "+type+"</br>description : "+des;
+        var str         = "signType : "+type+"<br />description : "+des+"<br />lng : "+lng+"<br />lat : "+lat;
+        var path_str    = "signType : "+type+"<br />description : "+des;
         var rsi         = addFixedMarker(lng,lat,str);
         rsi[_kDevUiId]  = ui_id;
         rsi[_kDevChild] = [];
@@ -345,7 +345,7 @@ function parseAsnRefpaths(paths,str,arr){
             var plat = p.lat.toFixed(7);
             latlngs.push([plat,plng]);
         }
-        str  = "radius : "+paths[i].pathRadius + "</br>" + str;
+        str  = "radius : "+paths[i].pathRadius + "<br />" + str;
         addAsnLane(latlngs,str,arr);
     }
 }
@@ -363,7 +363,7 @@ function parseAsnRsm(data) {
         var type        = ptc.ptcType;
         var heading     = ptc.heading;             
         var ui_id       = "rsm_" + type + "_" + id;
-        var str         = "ptcId : "+id+"</br>type : "+type+"</br>lng : "+lng+"</br>lat : "+lat + "</br>heading : " + heading;
+        var str         = "ptcId : "+id+"<br />type : "+type+"<br />lng : "+lng+"<br />lat : "+lat + "<br />heading : " + heading;
         var ptc_old     = checkAsnExist(Sdev.rsm,ui_id);
         if(ptc_old){
             ptc_old.setLatLng([lat,lng]);
@@ -395,8 +395,8 @@ function parseAsnBsm(data) {
     var events      = data.events;
     var pt          = [lat,lng];
     var ui_id       = "bsm_" + id;
-    var str         = "id : " + id + "</br>idString : "+ idStr + "</br>lng : " + lng + "</br>lat : " + lat 
-    str             += "</br>speed : " + speed + " km/h</br>heading : " + heading + "</br>events : " + events;
+    var str         = "id : " + id + "<br />idString : "+ idStr + "<br />lng : " + lng + "<br />lat : " + lat 
+    str             += "<br />speed : " + speed + " km/h<br />heading : " + heading + "<br />events : " + events;
     var bsm_old     = checkAsnExist(Sdev.bsm,ui_id);
     if(bsm_old){
         bsm_old.setLatLng([lat,lng]);
@@ -432,7 +432,7 @@ function parseAsnSpat(data) {
             var t           = phase.leftTime.toFixed(1);
             // var tmp         = "id:"+id+","+region+"\nphaseId:"+phase.phaseId+"----"+color +" ---- "+t;
             // console.log(tmp); 
-            phases_str      += '<div class="div_phase '+color+'">'+phase_id+'</br>'+t+'</div>';
+            phases_str      += '<div class="div_phase '+color+'">'+phase_id+'<br />'+t+'</div>';
         }
         var div = $("#"+ui_id);
         if(div.length > 0){

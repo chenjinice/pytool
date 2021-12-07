@@ -58,33 +58,66 @@
                 <input type="checkbox" id="cfg_rsi" /><span>rsi</span>
                 <input type="checkbox" id="cfg_rsm" /><span>rsm</span>
                 <input type="checkbox" id="cfg_spat" /><span>spat</span>
-                <input type="file"     id="cfg_asn_input" multiple="multiple" value="asn文件" />
-                <input type="button"   id="cfg_asn_submit"  value="打开asn" />
+                <input type="file"     id="cfg_asn_input" multiple="multiple" value="asn" />
+                <input type="button"   id="cfg_asn_submit" value="打开asn" />
+                <input type="file"     id="cfg_pt_input" multiple="multiple" value="pt文件" />
+                <input type="button"   id="cfg_pt_submit" value="打开点" />
                 <input type="text"     id="cfg_pname_input"/>
-                <input type="button"   id="cfg_pname_submit" value="存点" />
+                <input type="button"   id="cfg_pname_submit" value="存点" /><br />
+                <select id = "cfg_lane_num">
+                  <option value="1车道">1车道</option>
+                  <option value="2车道">2车道</option>
+                  <option value="3车道">3车道</option>
+                  <option value="4车道">4车道</option>
+                  <option value="5车道">5车道</option>
+                  <option value="6车道">6车道</option>
+                </select>
+                <select id = "cfg_fork_num">
+                  <option value="">无</option>
+                  <option value="二叉">二叉</option>
+                  <option value="三叉">三叉</option>
+                </select>
+                <input type="button" value="左1" onclick="saveCurrentPos(this)" />
+                <input type="button" value="左2" onclick="saveCurrentPos(this)" />
+                <input type="button" value="左3" onclick="saveCurrentPos(this)" />
+                <input type="button" value="左4" onclick="saveCurrentPos(this)" />
+                <input type="button" value="左5" onclick="saveCurrentPos(this)" />
+                <input type="button" value="左6" onclick="saveCurrentPos(this)" />
             </div>
+
             <div id="div_tool">
                 经度 <input type="number" id="input_lng" value="" min="-180.0" max="180.0" oninput="if(value < -180)value=-180;if (value > 180) value=180" />
                 纬度 <input type="number" id="input_lat" value="" min="-90.0" max="90.0" oninput="if(value < -90)value=-90;if (value > 90) value=90" />
                 <input type="button" id="tool_add_point" value="加点" />
                 <input type="button" id="tool_add_center" value="中心加点" />
-                <input type="file"   id="tool_path_input" multiple="multiple" value="采点文件" />
-                <input type="button" id="tool_path_submit" value="采点文件" />
+                <input type="file"   id="tool_path_input" multiple="multiple" value="打开路径" />
+                <input type="button" id="tool_path_submit" value="打开路径" />
                 <input type="button" id="tool_clear"    value="清空" />
             </div>
+
             <div id="div_status">
                 经纬度 : <span id="car_pos">       </span>
                 航向角 : <span id="car_heading">   </span>
                 速度 :   <span id="car_speed">     </span>
                 卫星数 : <span id="car_num_st">    </span>
-                hdop :   <span id="car_hdop">     </span>
-                模式 :   <span id="car_model">    </span>
+                hdop :   <span id="car_hdop">      </span>
+                模式 :   <span id="car_model">     </span>
             </div>
         </div>
 
 
 
         <script>
+        function saveCurrentPos(input){
+            var name    = input.value;
+            var l_num   = $("#cfg_lane_num").val();
+            var f_num   = $("#cfg_fork_num").val();
+            if(l_num.length > 0)name += "_" + l_num;
+            if(f_num.length > 0)name += "_" + f_num;
+            GKD.sockio.emit("save_current_pt",name);
+            // console.log(name);
+        }
+
         $(document).ready(function(){
             deviceInitAll();
 			var cfg = getDevCfg();
@@ -94,16 +127,17 @@
 			$("#cfg_rsi").attr("checked",cfg.rsi);
 			$("#cfg_rsm").attr("checked",cfg.rsm);
 			$("#cfg_spat").attr("checked",cfg.spat);
-            $("#cfg_follow").change(function()      {   setDevCfg("follow",$(this).prop('checked'));   });
-			$("#cfg_bsm").change(function() 	    {	setDevCfg("bsm",$(this).prop('checked'));	});
-			$("#cfg_map").change(function() 	    {	setDevCfg("map",$(this).prop('checked'));	});
-			$("#cfg_rsi").change(function() 	    {	setDevCfg("rsi",$(this).prop('checked'));	});
-			$("#cfg_rsm").change(function() 	    {	setDevCfg("rsm",$(this).prop('checked'));	});
-			$("#cfg_spat").change(function()	    {	setDevCfg("spat",$(this).prop('checked'));	});
+            $("#cfg_follow").change(function()      {   setDevCfg("follow",$(this).prop('checked'));    });
+			$("#cfg_bsm").change(function() 	    {	setDevCfg("bsm",$(this).prop('checked'));	    });
+			$("#cfg_map").change(function() 	    {	setDevCfg("map",$(this).prop('checked'));	    });
+			$("#cfg_rsi").change(function() 	    {	setDevCfg("rsi",$(this).prop('checked'));	    });
+			$("#cfg_rsm").change(function() 	    {	setDevCfg("rsm",$(this).prop('checked'));	    });
+			$("#cfg_spat").change(function()	    {	setDevCfg("spat",$(this).prop('checked'));	    });
             $("#cfg_pname_submit").click(function(){
                 var name = $("#cfg_pname_input").val();
                 GKD.sockio.emit("save_current_pt",name);
             });
+            // asn文件上传
             $("#cfg_asn_submit").click(function()   {   
                 return $("#cfg_asn_input").click();  
             });
@@ -121,7 +155,7 @@
                     processData: false,
                     contentType: false
                 }).done(function(res) {
-                    console.log("ajax ok");
+                    console.log("asn_upload ajax ok");
                     for(var i in res){
                         var data = res[i];
                         if(data.type == "bsmFrame"){
@@ -137,7 +171,40 @@
                         }
                     }
                 }).fail(function(res) {
-                    console.log("ajax fail : "+res);
+                    console.log("asn_upload ajax fail : "+res);
+                });
+                $(this).val("");
+            });
+
+            // pt文件上传
+            $("#cfg_pt_submit").click(function()   {   
+                return $("#cfg_pt_input").click();  
+            });
+            $("#cfg_pt_input").change(function()     { 
+                var formData = new FormData();
+                var f_list = $(this)[0].files;
+                for(var i=0;i<f_list.length;i++){
+                    formData.append("pt_"+i, $(this)[0].files[i]);
+                }
+                $.ajax({
+                    url: '/pt_upload',
+                    type: 'POST',
+                    cache: false,
+                    data: formData,
+                    processData: false,
+                    contentType: false
+                }).done(function(res) {
+                    console.log("pt_upload ajax ok");
+                    for(var i in res.pts){
+                        var data    = res.pts[i];
+                        var lng     = (data.lng*1).toFixed(7);
+                        var lat     = (data.lat*1).toFixed(7);
+                        var name    = data.name;
+                        var str     = "name : "+name+"<br />lng : "+lng+"<br />lat : "+lat;
+                        addFixedMarker(lng,lat,str);
+                    }
+                }).fail(function(res) {
+                    console.log("pt_upload ajax fail : "+res);
                 });
                 $(this).val("");
             });
@@ -175,6 +242,7 @@
                 $("#control_cfg").attr("checked",false);
                 $("#div_cfg").hide();
             }
+
 
 
 

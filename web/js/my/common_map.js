@@ -29,10 +29,9 @@ var GKD = {
     sockio_ready        : false,
 
     map                 : null,
-    type                : MapType.RemoteGoogleSatellite,
-    // center              : [0,0],
-    center              : [41.9016655,123.5177551],
-    // center           : [28.1128547,112.8668242],
+    // type                : MapType.RemoteGoogleSatellite,
+    type                : MapType.LocalGoogleSatellite,
+    center              : [28.1128547,112.8668242],
     zoom                : 17,
     min_zoom            : 3,
     max_zoom            : 22,
@@ -132,12 +131,12 @@ function myClear(){
 function addMarker(lng,lat,pan=0){
     var marker = L.marker([lat,lng]).addTo(GKD.group);
     marker.dragging.enable();
-    marker.bindPopup("lng : "+lng+"</br>lat : "+lat);
+    marker.bindPopup("lng : "+lng+"<br />lat : "+lat);
     marker.on('dragend',function(event){
         var pt = marker.getLatLng();
         var lat_new = pt.lat.toFixed(7);
         var lng_new = pt.lng.toFixed(7);
-        marker.setPopupContent("lng : "+lng_new+"</br>lat : "+lat_new);
+        marker.setPopupContent("lng : "+lng_new+"<br />lat : "+lat_new);
     });
     if(pan){
         GKD.map.panTo([lat,lng],{"animate":true,"duration":pan});
@@ -151,7 +150,7 @@ function addFixedMarker(lng,lat,str="",pan=0) {
     if (str){
         marker.bindPopup(str);
     }else{
-        marker.bindPopup("lng : "+lng+"</br>lat : "+lat);
+        marker.bindPopup("lng : "+lng+"<br />lat : "+lat);
     }
     if(pan){
         GKD.map.panTo([lat,lng],{"animate":true,"duration":pan});
