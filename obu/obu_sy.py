@@ -60,12 +60,12 @@ class ObuSy(ObuAbstract):
                 if data[0] == ord('g') and data[1] == ord('p') and data[2] == ord('s') and data[3] == ord('0') and len(
                         data) >= 36:
                     dict = self.__parseGps(data)
-                    if self.html_sender:
-                        self.html_sender(dict,self.room_id)
+                    if self.html_sender and self.html_sender.asn_send:
+                        self.html_sender.asn_send(dict,self.room_id)
                 else:
-                    if self.asn_parser and self.html_sender:
+                    if self.asn_parser and self.html_sender and self.html_sender.asn_send:
                         dict = self.asn_parser(data,self.ip)
-                        self.html_sender(dict,self.room_id)
+                        self.html_sender.asn_send(dict,self.room_id)
                         self.saveAsn(dict,data)
             except ConnectionResetError:
                 continue

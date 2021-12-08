@@ -200,7 +200,8 @@
                         var lng     = (data.lng*1).toFixed(7);
                         var lat     = (data.lat*1).toFixed(7);
                         var name    = data.name;
-                        var str     = "name : "+name+"<br />lng : "+lng+"<br />lat : "+lat;
+                        var heading = data.heading;
+                        var str     = "name : "+name+"<br />lng : "+lng+"<br />lat : "+lat +"<br />heading : "+heading;
                         addFixedMarker(lng,lat,str);
                     }
                 }).fail(function(res) {

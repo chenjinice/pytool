@@ -11,6 +11,12 @@ from config                 import *
 from map_downloader         import MapDownloader
 
 
+class HtmlSender():
+    def __init__(self):
+        self.asn_send = None
+        self.err_send = None
+        self.pt_send  = None
+
 
 '''去掉恶心的log'''
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
@@ -31,6 +37,8 @@ _rooms                      = {}
 _lock                       = threading.Lock()
 _obus                       = obuAll
 _asns                       = asnAll
+
+_html_sender                = HtmlSender()
 
 
 
@@ -117,22 +125,17 @@ def ptUpload():
             arr = tmp[1].split(',')
             if len(arr) < 4:
                 continue
-            pt          = {}
-            pt[oLng]    = arr[0]
-            pt[oLat]    = arr[1]
-            pt[oName]   = arr[3]
+            pt              = {}
+            pt[oLng]        = arr[0]
+            pt[oLat]        = arr[1]
+            pt[oHeading]    = arr[2]
+            pt[oName]       = arr[3]
             result[oPts].append(pt)
     return result
 
 
 
 '''---------------------flask_socketio-----------------'''
-class HtmlSender():
-    def __init__(self):
-        self.asn_sender = None
-
-
-
 def sioSendObuData(data={},ip=''):
     _socketio.emit('sio_obu_msg',data,to=ip)
 
@@ -142,6 +145,13 @@ def sioSendMapUpdateSiginal():
 def sioSendErr(err='',sid=''):
     _socketio.emit('sio_err',err,to=sid)
 
+def sioSendPt(data={},sid=''):
+    _socketio.emit('sio_pt',data,to=sid)
+
+
+_html_sender.asn_send    = sioSendObuData
+_html_sender.err_send    = sioSendErr
+_html_sender.pt_send     = sioSendPt
 
 
 @_socketio.on('connect')
@@ -171,7 +181,7 @@ def hello(ip,port,obu_type,asn_type):
     port_int    = int(port)
     obu_class   = _obus.get(obu_type)
     asn_class   = _asns.get(asn_type)
-    obu         = obu_class.openDevice(ip,port_int,asn_parser=asn_class.parseAsn, html_sender=sioSendObuData,sid=sid)
+    obu         = obu_class.openDevice(ip,port_int,asn_parser=asn_class.parseAsn, html_sender=_html_sender,sid=sid)
     join_room(obu.room_id)
 
 @_socketio.on('heart_beat')

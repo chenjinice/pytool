@@ -237,3 +237,10 @@ class ObuAbstract(metaclass=abc.ABCMeta):
         f.write(line)
         f.close()
 
+        if self.html_sender and self.html_sender.pt_send:
+            data = {}
+            data[oLng]      = lng
+            data[oLat]      = lat
+            data[oName]     = name
+            data[oHeading]  = heading
+            self.html_sender.pt_send(data,sid)

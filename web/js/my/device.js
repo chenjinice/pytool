@@ -73,6 +73,14 @@ function deviceInitAll(){
             if(Sdev.cfg.spat)parseAsnSpat(data);
         }
     });
+    GKD.sockio.on('sio_pt',function(data){
+        var lng     = data.lng;
+        var lat     = data.lat;
+        var name    = data.name;
+        var heading = data.heading;
+        var str     = "name : "+name+"<br />lng : "+lng+"<br />lat : "+lat +"<br />heading : "+heading;
+        addFixedMarker(lng,lat,str);
+    });
     // timer
     if(Sdev.timer == null){
         Sdev.timer  = self.setInterval("intervalFun()",300);
