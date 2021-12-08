@@ -111,10 +111,8 @@ class ObuAbstract(metaclass=abc.ABCMeta):
         self.stop()
 
 
-    @abc.abstractmethod
-    def stop():
-        '''抽象方法,关闭obu连接，需要子类实现'''
-        pass
+    def stop(self):
+        self.ready          = False
 
 
     @classmethod
@@ -203,6 +201,8 @@ class ObuAbstract(metaclass=abc.ABCMeta):
 
     def savePos(self):
         if not self.pos_log_flag:
+            return
+        if not self.ready:
             return
         pre     = '{\n  "points":[\n'
         line    = '[' + format(self.lng, '.7f') + ',' + format(self.lat, '.7f') + ',' + format(self.heading,'.2f')
