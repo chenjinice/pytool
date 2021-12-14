@@ -433,9 +433,12 @@ function parseAsnSpat(data) {
         var region          = section.id.region;
         var ui_id           = "spat_" + id + "_" + region;
         var phases_str      = "<div class='div_spat_id'>"+id+"-"+region+"</div>";
+		var phase_count  	= 0;
         for(var m=0;m<section.phases.length;m++){
             var phase       = section.phases[m];
             var phase_id    = phase.phaseId;
+			if(phase_id == 0)continue;
+			phase_count++;
             var color       = phase.color;
             var t           = phase.leftTime.toFixed(1);
             // var tmp         = "id:"+id+","+region+"\nphaseId:"+phase.phaseId+"----"+color +" ---- "+t;
@@ -443,7 +446,7 @@ function parseAsnSpat(data) {
             phases_str      += '<div class="div_phase '+color+'">'+phase_id+'<br />'+t+'</div>';
         }
         var div = $("#"+ui_id);
-        if(div.length > 0){
+        if( (div.length > 0) && (phase_count > 0) ){
             div.html(phases_str);
             div.attr(_kDevMs,now);    
         }else{
