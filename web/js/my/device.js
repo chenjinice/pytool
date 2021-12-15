@@ -403,7 +403,7 @@ function parseAsnBsm(data) {
     var events      = data.events;
     var pt          = [lat,lng];
     var ui_id       = "bsm_" + id;
-    var str         = "id : " + id + "<br />idString : "+ idStr + "<br />lng : " + lng + "<br />lat : " + lat 
+    var str         = "id : " + id + "<br />lng : " + lng + "<br />lat : " + lat 
     str             += "<br />speed : " + speed + " km/h<br />heading : " + heading + "<br />events : " + events;
     var bsm_old     = checkAsnExist(Sdev.bsm,ui_id);
     if(bsm_old){

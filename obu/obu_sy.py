@@ -79,8 +79,10 @@ class ObuSy(ObuAbstract):
 
 
     def __sendHeart(self):
-        self.udp_fd.sendto('hi'.encode(), (self.ip,self.port))
-
+        try:
+            self.udp_fd.sendto('hi'.encode(), (self.ip,self.port))
+        except:
+            pass
 
     def __parseGps(self, data):
         head,lng,lat,elev,speed,heading,num_st,hdop,model = struct.unpack("9i",data)

@@ -341,7 +341,8 @@ class Asn2020(AsnAbstract):
     def __parseBsm(self, bsm, l_bsm):
         l_bsm[lPos]     = {}
         l_bsm[lId]      = binascii.b2a_hex(bsm[_kId]).decode('utf-8')
-        l_bsm[lIdStr]   = bsm[_kId].decode('ascii')
+        # l_bsm[lIdStr]   = bsm[_kId].decode('ascii')
+        l_bsm[lIdStr]   = ''
         l_bsm[lSpeed]   = bsm[_kSpeed]   * _kcResSpeed
         l_bsm[lHeading] = bsm[_kHeading] * _kcResHeading
         l_bsm[lEvents]  = 0
