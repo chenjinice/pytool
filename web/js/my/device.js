@@ -446,7 +446,8 @@ function parseAsnSpat(data) {
             phases_str      += '<div class="div_phase '+color+'">'+phase_id+'<br />'+t+'</div>';
         }
         var div = $("#"+ui_id);
-        if( (div.length > 0) && (phase_count > 0) ){
+        if(phase_count == 0)continue;
+        if(div.length > 0){
             div.html(phases_str);
             div.attr(_kDevMs,now);    
         }else{
