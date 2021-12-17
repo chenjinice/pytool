@@ -327,6 +327,7 @@ class Asn2020(AsnAbstract):
         self.__parseRefPos(rsm[_kRefPos],l_rsm[lRefPos])
         for ptc in rsm[_kParticipants]:
             l_ptc               = {}
+            l_ptc[lRsuId]       = binascii.b2a_hex(rsm[_kId]).decode('utf-8')
             l_ptc[lPos]         = {}
             l_ptc[lPtcId]       = ptc[_kPtcId]
             l_ptc[lPtcType]     = ptc[_kPtcType]

@@ -367,11 +367,12 @@ function parseAsnRsm(data) {
         var ptc         = data.participants[i];
         var lng         = ptc.pos.lng.toFixed(7);
         var lat         = ptc.pos.lat.toFixed(7);
+        var rsu_id 		= ptc.rsuId;
         var id          = ptc.ptcId;
         var type        = ptc.ptcType;
         var heading     = ptc.heading;             
-        var ui_id       = "rsm_" + type + "_" + id;
-        var str         = "ptcId : "+id+"<br />type : "+type+"<br />lng : "+lng+"<br />lat : "+lat + "<br />heading : " + heading;
+        var ui_id       = "rsm_" +rsu_id+"_"+type + "_" + id;
+        var str         = "rsuId : "+rsu_id+"<br />ptcId : "+id+"<br />type : "+type+"<br />lng : "+lng+"<br />lat : "+lat + "<br />heading : " + heading;
         var ptc_old     = checkAsnExist(Sdev.rsm,ui_id);
         if(ptc_old){
             ptc_old.setLatLng([lat,lng]);
