@@ -18,6 +18,7 @@ var MapType = {
 var GKD = {
     arrow1_icon         : L.icon({ iconUrl:'style/image/arrow.png',iconSize: [15, 15]}),
     arrow2_icon         : L.icon({ iconUrl:'style/image/arrow2.png',iconSize: [15, 15]}),
+    center_marker_icon  : L.icon({ iconUrl:'style/image/center_marker_icon.png',iconSize: [25, 40.5],iconAnchor:[12.5,40.5]}),
     car_icon            : L.icon({ iconUrl:'style/image/car.png',iconSize: [25, 48],iconAnchor:[12.5,48] }),
     remote_car_icon     : L.icon({ iconUrl:'style/image/other_car.png',iconSize: [25, 48],iconAnchor:[12.5,48] }),
 
@@ -31,7 +32,7 @@ var GKD = {
     map                 : null,
     // type                : MapType.RemoteGoogleSatellite,
     type                : MapType.LocalGoogleSatellite,
-    center              : [28.1128547,112.8668242],
+    center              : [26.8900981,112.5730558],
     zoom                : 17,
     min_zoom            : 3,
     max_zoom            : 22,
@@ -161,7 +162,18 @@ function addFixedMarker(lng,lat,str="",pan=0) {
 // 在地图中心添加marker
 function addMarkerAtCenter(){
     var center = GKD.map.getCenter();
-    addMarker(center.lng.toFixed(7),center.lat.toFixed(7));
+    var marker = L.marker(center,{icon:GKD.center_marker_icon}).addTo(GKD.group);
+    var lng = center.lng.toFixed(7);
+    var lat = center.lat.toFixed(7);
+    marker.dragging.enable();
+    marker.bindPopup("lng : "+lng+"<br />lat : "+lat);
+    marker.on('dragend',function(event){
+        var pt = marker.getLatLng();
+        var lat_new = pt.lat.toFixed(7);
+        var lng_new = pt.lng.toFixed(7);
+        marker.setPopupContent("lng : "+lng_new+"<br />lat : "+lat_new);
+    });
+    return marker;
 }
 
 
