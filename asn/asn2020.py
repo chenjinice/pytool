@@ -181,7 +181,7 @@ class Asn2020(AsnAbstract):
             l_node[lLanes] = []
             self.__parseInlinks(node.get(_kInlinks), l_node[lLanes])
             l_map[lNodes].append(l_node)
-        print(l_map)
+        # print(l_map)
 
     def __parseInlinks(self,links, l_lanes):
         '''解析links'''
@@ -191,8 +191,7 @@ class Asn2020(AsnAbstract):
             link_width = link[_kLinkWidth]
             movements = {}
             self.__parseMovements(link.get(_kMovement), movements)
-            self.__parseLanes(link[_kLanes], l_lanes, link_width, movements)
-            if not l_lanes:
+            if link.__contains__(_kPoints):
                 l_lane = {}
                 l_lane[lLaneWidth] = link_width
                 l_lane[lMovements] = movements
@@ -200,6 +199,7 @@ class Asn2020(AsnAbstract):
                 l_lane[lPoints]    = []
                 self.__parsePoints(link.get(_kPoints), l_lane[lPoints])
                 l_lanes.append(l_lane)
+            self.__parseLanes(link[_kLanes], l_lanes, link_width, movements)
 
     def __parseLanes(self,lanes, l_lanes, link_width, movements):
         '''解析lanes'''
@@ -237,9 +237,8 @@ class Asn2020(AsnAbstract):
         direct = [lPhaseStraight, lPhaseLeft, lPhaseRight, lPhaseU]
         m_len = min(len(direct), len(m))
         for i in range(m_len):
-            phase_id = m[i].get(_kPhaseId)
-            if phase_id:
-                l_m[direct[i]] = phase_id
+            if(m[i].__contains__(_kPhaseId)):
+                l_m[direct[i]] = m[i].get(_kPhaseId)
 
     def __parseConnectsTo(self,conects, maneuvers, l_conencts):
         '''解析lane里的connectsTo'''
