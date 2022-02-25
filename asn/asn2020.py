@@ -141,8 +141,8 @@ class Asn2020(AsnAbstract):
             l_pt[lLon] = (pos[_kLon]) * _kcResLatLng
             l_pt[lLat] = (pos[_kLat]) * _kcResLatLng
         else:
-            l_pt[lLon] = (pos[_kLon] + self.__ref_lng) * _kcResLatLng
-            l_pt[lLat] = (pos[_kLat] + self.__ref_lat) * _kcResLatLng
+            l_pt[lLon] = (pos[_kLon]) * _kcResLatLng + self.__ref_lng
+            l_pt[lLat] = (pos[_kLat]) * _kcResLatLng + self.__ref_lat
 
     def __parseDescription(self,des):
         ret = ''
@@ -181,6 +181,7 @@ class Asn2020(AsnAbstract):
             l_node[lLanes] = []
             self.__parseInlinks(node.get(_kInlinks), l_node[lLanes])
             l_map[lNodes].append(l_node)
+        print(l_map)
 
     def __parseInlinks(self,links, l_lanes):
         '''解析links'''
@@ -198,6 +199,7 @@ class Asn2020(AsnAbstract):
                 l_lane[lManeuvers] = lcRoadStraight
                 l_lane[lPoints]    = []
                 self.__parsePoints(link.get(_kPoints), l_lane[lPoints])
+                l_lanes.append(l_lane)
 
     def __parseLanes(self,lanes, l_lanes, link_width, movements):
         '''解析lanes'''
