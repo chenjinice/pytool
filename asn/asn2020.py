@@ -115,8 +115,8 @@ class Asn2020(AsnAbstract):
                 self.__parseRsi(decoded[1],dict)
             else:
                 pass
-        except asn1tools.errors.DecodeError:
-            print('asn decode failed')
+        except Exception as e:
+            print('asn decode failed :',e)
         return dict
 
 
