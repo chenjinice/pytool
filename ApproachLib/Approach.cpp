@@ -67,6 +67,7 @@ eint Approach::Initialize(std::vector<eint> &vFeatureList,ebool &bLimbAuthority,
     vFeatureList.push_back(Message_Code_PaperRollDect);
     vFeatureList.push_back(Message_Code_Slam_Localization);
     vFeatureList.push_back(Message_Code_WheelState);
+    vFeatureList.push_back(Message_Code_CalibData);
 
     bLimbAuthority          = true;
     dTimeOut                = 3;
@@ -213,7 +214,7 @@ ebool Approach::GetRobotData()
         }else {
             Log::err(ClassName,"vps location too old, dt = %.2f",dTime);
         }
-        TestUi::Ins()->SaveRobotPose(iLocalization.m_iCurrentPose);
+        TestUi::Ins()->SaveRobotInRealis(iLocalization.m_iCurrentPose);
     }
     return bResult;
 }
@@ -269,7 +270,7 @@ ebool Approach::GetPaperData(edouble &dPaperX, edouble &dPaperY)
         sPaper.dY         = iPaperRoll.m_iPose.m_iPosition.m_dy;
         sPaper.dMapX      = sRobot.dX + sPaper.dX*cos(sRobot.dRz) - sPaper.dY*sin(sRobot.dRz);
         sPaper.dMapY      = sRobot.dY + sPaper.dX*sin(sRobot.dRz) + sPaper.dY*cos(sRobot.dRz);
-        Log::inf(ClassName,"paper[%d]:x=%.2f,y=%.2f,mapX=%.2f,mapY=%.2f,radius=%.02f,dt=%.3f",
+        Log::inf(ClassName,"paperInLidar[%d]:x=%.3f,y=%.3f,mapX=%.3f,mapY=%.3f,radius=%.02f,dt=%.3f",
                  i,sPaper.dX,sPaper.dY,sPaper.dMapX,sPaper.dMapY,sPaper.dRadius,dTime);
         if(iPaperRoll.m_iPose.m_iPosition.m_dx < m_sParam.dPaperMinRelativeX) continue;
         if(fabs(iPaperRoll.m_fDiameter - m_dApproachPaperRadius) > m_sParam.dPaperRadiusOffset) continue;
@@ -323,14 +324,7 @@ ebool Approach::GetPaperData(edouble &dPaperX, edouble &dPaperY)
             Log::inf(ClassName,"paperFromLidar:x=%.2f,y=%.2f,radius=%.02f,dt=%.2f",dPaperX,dPaperY,m_sPaper.dRadius,dTime);
         }
         bResult             = true;
-        // ui显示
-        CPose iPaperInLidar;
-        iPaperInLidar.m_iPosition.m_dx  = dPaperX;
-        iPaperInLidar.m_iPosition.m_dy  = dPaperY;
-        TestUi::Ins()->SavePaperRadius(m_dApproachPaperRadius);
-        TestUi::Ins()->SavePaperInLidar(iPaperInLidar);
     }
-    TestUi::Ins()->Show();
     return bResult;
 }
 
@@ -496,6 +490,107 @@ void Approach::GetPaperPosInRobot(const CPosition &iPaperPosInLidar, const CPose
     iPaperPosInRealis.m_dz             = iResult(2);
 }
 
+ebool Approach::TestLidarAndRealis()
+{
+    edouble             dNow                = 0;
+    eint                nCount              = 0;
+    CRigidBodyList      iRealisItems;
+    CPaperRollMsg       iFittingMsg;
+    ebool               bHasLidarData       = false;
+    ebool               bHasRealisPaper     = false;
+    ebool               bHasRealisMark      = false;
+    edouble             dTimeLidar          = 0;
+    edouble             dTimeRealis         = 0;
+    CPose               iRobotInRealis,iPaperInRealis,iMarkInRealis,iPaperInRobot,iFittingResult,iFittingResultInRealis;
+    Matrix4d            iMat;
+    TestUi *            pUi                 = TestUi::Ins();
+    // 机器人->mark坐标系转换矩阵
+    iMat <<             0.9999,-0.0130,0,1.4194,
+                        0.0130,0.9990,0,0.0206,
+                        0,0,1.0000,-1.9824,
+                        0,0,0,1.0000;
+
+    pUi->SavePaperRadius(m_dApproachPaperRadius);
+    dNow                                    = Time::GetCurrentTime();
+    // 获取雷达和摄像头中纸卷位置
+    if(GetMsgData(&iFittingMsg))
+    {
+        nCount                              = iFittingMsg.m_vPaperRollList.size();
+        for(int i=0;i<nCount;i++)
+        {
+            const CPaperRoll   &iPaperRoll  = iFittingMsg.m_vPaperRollList[i];
+            dTimeLidar                      = dNow - iFittingMsg.m_dTimeStamp;
+            if(fabs(iPaperRoll.m_fDiameter - m_dApproachPaperRadius) > m_sParam.dPaperRadiusOffset) continue;
+//            Log::inf(ClassName,"paperInLidar[%d]:radius=%.2f,x=%.2f,y=%.2f,dt=%.3f",
+//                     i,iPaperRoll.m_fDiameter,iPaperRoll.m_iPose.m_iPosition.m_dx,iPaperRoll.m_iPose.m_iPosition.m_dy,dTimeLidar);
+            iFittingResult                  = iPaperRoll.m_iPose;
+            bHasLidarData                   = true;
+        }
+    }else{
+//        Log::inf(ClassName,"get paper roll failed\n");
+    }
+    // 获取纸卷和车的全局位置
+    if(GetMsgData(&iRealisItems))
+    {
+        nCount                              = iRealisItems.m_vItemList.size();
+        for(int i=0;i<nCount;i++)
+        {
+            echar * strName                 = iRealisItems.m_vItemList[i].m_szName;
+            string  str                     = strName;
+            CPose   iPos                    = iRealisItems.m_vItemList[i].m_iPose;
+            dTimeRealis                     = dNow - iRealisItems.m_dTimeStamp;
+            if(str == "Mark"){
+                iMarkInRealis               = iPos;
+                bHasRealisMark              = true;
+            }
+            if(str == "Paper"){
+                iPaperInRealis              = iPos;
+                bHasRealisPaper             = true;
+            }
+//            Log::inf(ClassName,"[%d]name=%s,x=%.3f,y=%.3f,Rz=%.3f",i,strName,iPos.m_iPosition.m_dx,iPos.m_iPosition.m_dy,iPos.m_iRotation.m_dRz);
+        }
+    }else{
+        Log::inf(ClassName,"get realis data failed");
+    }
+    if(bHasRealisMark){
+        this->GetRobotPosInRealis(iMat,iMarkInRealis,iRobotInRealis.m_iPosition);
+        // 机器人的航向角取Mark的，而不是机器人原点在realis下的欧拉角,机器人原点相对于Mark只是平移关系
+        iRobotInRealis.m_iRotation          = iMarkInRealis.m_iRotation;
+        Log::inf(ClassName,"markInRealis:x=%.3f,y=%.3f,Rz=%.3f,robot:x=%.3f,y=%.3f,Rz=%.3f,dt=%.3f",
+                 iMarkInRealis.m_iPosition.m_dx,iMarkInRealis.m_iPosition.m_dy,iMarkInRealis.m_iRotation.m_dRz,
+                 iRobotInRealis.m_iPosition.m_dx,iRobotInRealis.m_iPosition.m_dy,iRobotInRealis.m_iRotation.m_dRz,dTimeRealis);
+        pUi->SaveRobotInRealis(iRobotInRealis);
+    }
+    if(bHasRealisMark && bHasRealisPaper){
+        // 根据paper在realis中位置以及机器人在realis中位置以及机器人的航向角，计算paper在机器人中位置
+        this->GetPaperPosInRobot(iPaperInRealis.m_iPosition,iRobotInRealis,iPaperInRobot.m_iPosition);
+        Log::inf(ClassName,"paperInRealis:x=%.3f,y=%.3f,paperInRobot:x=%.3f,y=%.3f,dt=%.3f",
+                 iPaperInRealis.m_iPosition.m_dx,iPaperInRealis.m_iPosition.m_dy,
+                 iPaperInRobot.m_iPosition.m_dx,iPaperInRobot.m_iPosition.m_dy,dTimeRealis);
+        pUi->SavePaperInRealis(iPaperInRealis);
+
+    }
+    // 打印差值
+    if(bHasRealisMark && bHasRealisPaper && bHasLidarData){
+        edouble dX                          = iPaperInRobot.m_iPosition.m_dx - iFittingResult.m_iPosition.m_dx;
+        edouble dY                          = iPaperInRobot.m_iPosition.m_dy - iFittingResult.m_iPosition.m_dy;
+        edouble dT                          = dTimeLidar-dTimeRealis;
+        echar strText[200];
+        Log::inf(ClassName,"diff============dx=%.3f,dy=%.3f,dt=%.3f",dX,dY,dT);
+        // 雷达中的纸卷位置转换到Realis坐标系下的位置,用于ui显示
+        edouble dTheta                              = iRobotInRealis.m_iRotation.m_dRz;
+        CPosition &iPos                             = iFittingResult.m_iPosition;
+        iFittingResultInRealis.m_iPosition.m_dx     = iRobotInRealis.m_iPosition.m_dx + iPos.m_dx*cos(dTheta) - iPos.m_dy*sin(dTheta);
+        iFittingResultInRealis.m_iPosition.m_dy     = iRobotInRealis.m_iPosition.m_dy + iPos.m_dx*sin(dTheta) + iPos.m_dy*cos(dTheta);
+        sprintf(strText,"paper:dx=%.3f,dy=%.3f,dt=%.3f",dX,dY,dT);
+        pUi->SavePaperInLidar(iFittingResultInRealis);
+        pUi->SaveText(strText);
+    }
+    // ui显示
+    pUi->Show();
+    return true;
+}
+
 void Approach::TestMatrix()
 {
     CPose               iFittingResult;
@@ -503,7 +598,6 @@ void Approach::TestMatrix()
                                                {0.0130,0.9990,0,0.0206},
                                                {0,0,1.0000,-1.9824},
                                                {0,0,0,1.0000}};
-
     Matrix4d    iMat;
     iMat <<     0.9999,-0.0130,0,1.4194,
             0.0130,0.9990,0,0.0206,

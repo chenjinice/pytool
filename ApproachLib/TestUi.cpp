@@ -41,7 +41,7 @@ cv::Point TestUi::GetPoint(const CPose &iPos)
     return iPoint;
 }
 
-void TestUi::SaveRobotPose(const CPose &iPos)
+void TestUi::SaveRobotInRealis(const CPose &iPos)
 {
     if(m_bHasRobotPos)
     {

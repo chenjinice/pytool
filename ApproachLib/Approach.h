@@ -103,6 +103,7 @@ private:
 
     void                GetRobotPosInRealis(const Eigen::Matrix4d &iMatRobotInMark, const CPose &iMarkInRealis, CPosition &iRobotPosInRealis);
     void                GetPaperPosInRobot(const CPosition &iPaperPosInLidar,const CPose &iRobotInRealis,CPosition &iPaperPosInRealis);
+    ebool               TestLidarAndRealis();
     void                TestMatrix();
 
 

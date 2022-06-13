@@ -15,7 +15,7 @@ public:
 
     void                Init();
     cv::Point           GetPoint(const CPose &iPos);
-    void                SaveRobotPose(const CPose &iPos);
+    void                SaveRobotInRealis(const CPose &iPos);
     void                SavePaperRadius(efloat fRadius);
     void                SavePaperInLidar(const CPose &iPos);
     void                SavePaperInRealis(const CPose &iPos);
