@@ -64,7 +64,8 @@ Approach::~Approach()
 eint Approach::Initialize(std::vector<eint> &vFeatureList,ebool &bLimbAuthority,edouble &dTimeOut)
 {
     vFeatureList.clear();
-    vFeatureList.push_back(Message_Code_PaperRollDect);
+    vFeatureList.push_back(57);
+//    vFeatureList.push_back(Message_Code_PaperRollDect);
     vFeatureList.push_back(Message_Code_Slam_Localization);
     vFeatureList.push_back(Message_Code_WheelState);
     vFeatureList.push_back(Message_Code_CalibData);
@@ -313,15 +314,19 @@ ebool Approach::GetPaperData(edouble &dPaperX, edouble &dPaperY)
         dTime               = dNow - m_sPaper.dTime;
         if(fabs(dTime) < m_sParam.dPaperValidTime)
         {
-            edouble dDeltaX = m_sPaper.dMapX - sRobot.dX;
-            edouble dDeltaY = m_sPaper.dMapY - sRobot.dY;
-            dPaperX         = dDeltaX*cos(sRobot.dRz)  + dDeltaY*sin(sRobot.dRz);
-            dPaperY         = -dDeltaX*sin(sRobot.dRz) + dDeltaY*cos(sRobot.dRz);
-            Log::inf(ClassName,"paperFromMap:x=%.2f,y=%.2f,radius=%.02f,dt=%.2f",dPaperX,dPaperY,m_sPaper.dRadius,dTime);
-        }else{
+//            edouble dDeltaX = m_sPaper.dMapX - sRobot.dX;
+//            edouble dDeltaY = m_sPaper.dMapY - sRobot.dY;
+//            dPaperX         = dDeltaX*cos(sRobot.dRz)  + dDeltaY*sin(sRobot.dRz);
+//            dPaperY         = -dDeltaX*sin(sRobot.dRz) + dDeltaY*cos(sRobot.dRz);
+//            Log::inf(ClassName,"paperFromMap:x=%.2f,y=%.2f,radius=%.2f,dt=%.2f",dPaperX,dPaperY,m_sPaper.dRadius,dTime);
             dPaperX         = m_sPaper.dX;
             dPaperY         = m_sPaper.dY;
-            Log::inf(ClassName,"paperFromLidar:x=%.2f,y=%.2f,radius=%.02f,dt=%.2f",dPaperX,dPaperY,m_sPaper.dRadius,dTime);
+            Log::inf(ClassName,"observe paper:x=%.3f,y=%.3f,radius=%.2f,dt=%.3f",dPaperX,dPaperY,m_sPaper.dRadius,dTime);
+        }else{
+//            dPaperX         = m_sPaper.dX;
+//            dPaperY         = m_sPaper.dY;
+//            Log::inf(ClassName,"paperFromLidar:x=%.2f,y=%.2f,radius=%.02f,dt=%.2f",dPaperX,dPaperY,m_sPaper.dRadius,dTime);
+            Log::inf(ClassName,"paper data too old , dt=%.3f",dTime);
         }
         bResult             = true;
     }
