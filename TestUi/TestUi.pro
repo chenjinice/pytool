@@ -31,8 +31,6 @@ INCLUDEPATH += /usr/share/ewaybot/thirdpartylib/include/ros
 
 SOURCES += main.cpp \
 Approach.cpp \
-    TestFsm.cpp \
     TestUi.cpp
 HEADERS += Approach.h \
-    TestFsm.h \
     TestUi.h
