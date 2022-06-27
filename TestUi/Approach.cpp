@@ -6,6 +6,7 @@
 #include <EwayMath/CoordinateConversion.h>
 
 #include "TestUi.h"
+#include "kalmanfilter.h"
 
 
 Declare_FunSdk_Lib(Approach)
@@ -66,6 +67,8 @@ Approach::Approach()
 {
 //    this->ShowGui();
 //    this->TestLidar();
+
+    KalmanFilter k(3,5,1);
 }
 
 Approach::~Approach()

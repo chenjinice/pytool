@@ -31,6 +31,8 @@ INCLUDEPATH += /usr/share/ewaybot/thirdpartylib/include/ros
 
 SOURCES += main.cpp \
 Approach.cpp \
-    TestUi.cpp
+    TestUi.cpp \
+    kalmanfilter.cpp
 HEADERS += Approach.h \
-    TestUi.h
+    TestUi.h \
+    kalmanfilter.h
